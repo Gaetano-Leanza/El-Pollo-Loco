@@ -7,7 +7,7 @@ class MovableObject {
 
     loadImage(path) {
         this.img = new Image();
-        this.img.scr = path;
+        this.img.src = path;
     }
 
     moveRight() {
