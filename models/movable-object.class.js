@@ -29,6 +29,30 @@ class MovableObject {
     this.img.src = path;
   }
 
+  draw(ctx) {
+    ctx.drawImage(this.img, this.x, this.y, this.width, this.height);
+  }
+
+  drawFrame(ctx) {
+    if (this instanceof Character || this instanceof Chicken) {
+      ctx.beginPath();
+      ctx.lineWidth = "10";
+      ctx.strokeStyle = "blue";
+      ctx.rect(this.x, this.y, this.width, this.height);
+      ctx.stroke();
+    }
+  }
+
+ isColliding(mo) {
+  return (
+    this.x + this.width > mo.x &&
+    this.y + this.height > mo.y &&
+    this.x < mo.x + mo.width &&
+    this.y < mo.y + mo.height
+  );
+}
+
+
   loadImages(arr) {
     arr.forEach((path) => {
       let img = new Image();
