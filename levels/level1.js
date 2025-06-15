@@ -1,8 +1,8 @@
 let chickens = [];
 let chickensPerGroup = 3;
-let groupSpacing = 1300;     
-let chickenSpacing = 100; 
-let startX = 500;         
+let groupSpacing = 1300;
+let chickenSpacing = 100;
+let startX = 500;
 
 for (let i = 0; i < 9; i++) {
   let group = Math.floor(i / chickensPerGroup);
@@ -11,8 +11,6 @@ for (let i = 0; i < 9; i++) {
   let x = startX + group * groupSpacing + positionInGroup * chickenSpacing;
   chickens.push(new Chicken(x));
 }
-
-
 
 chickens.push(new Endboss());
 

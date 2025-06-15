@@ -2,6 +2,11 @@ class Character extends MovableObject {
   height = 280;
   y = 80;
   speed = 10;
+  hitboxOffsetX = 0;
+  hitboxOffsetY = 0;
+  hitboxWidthReduction = 0;
+  hitboxHeightReduction = 0;
+
   IMAGES_WALKING = [
     "../img/2_character_pepe/2_walk/W-21.png",
     "../img/2_character_pepe/2_walk/W-22.png",
@@ -49,7 +54,20 @@ class Character extends MovableObject {
     this.loadImages(this.IMAGES_JUMPING);
     this.loadImages(this.IMAGES_DEAD);
     this.loadImages(this.IMAGES_HURT);
+    this.hitboxOffsetX = 25;
+    this.hitboxOffsetY = 130;
+    this.hitboxWidthReduction = 50;
+    this.hitboxHeightReduction = 160;
     this.applyGravity();
+  }
+
+  getHitbox() {
+    return {
+      x: this.x + this.hitboxOffsetX,
+      y: this.y + this.hitboxOffsetY,
+      width: this.width - this.hitboxWidthReduction,
+      height: this.height - this.hitboxHeightReduction,
+    };
   }
 
   animate() {

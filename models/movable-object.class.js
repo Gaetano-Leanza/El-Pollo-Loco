@@ -24,12 +24,24 @@ class MovableObject extends DrawableObject {
   }
 
   isColliding(mo) {
+    let thisHitbox = this.getHitbox();
+    let moHitbox = mo.getHitbox();
+
     return (
-      this.x + this.width > mo.x &&
-      this.y + this.height > mo.y &&
-      this.x < mo.x + mo.width &&
-      this.y < mo.y + mo.height
+      thisHitbox.x + thisHitbox.width > moHitbox.x &&
+      thisHitbox.y + thisHitbox.height > moHitbox.y &&
+      thisHitbox.x < moHitbox.x + moHitbox.width &&
+      thisHitbox.y < moHitbox.y + moHitbox.height
     );
+  }
+
+  getHitbox() {
+    return {
+      x: this.x,
+      y: this.y,
+      width: this.width,
+      height: this.height,
+    };
   }
 
   hit() {

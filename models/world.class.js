@@ -5,13 +5,18 @@ class World {
   ctx;
   keyboard;
   camera_x = 0;
-  statusBar = new StatusBar();
+  statusBar = new StatusBar("health", 10, 0);
+  bottleBar = new StatusBar("bottle", 10, 60);
+  coinBar = new StatusBar("coin", 10, 120);
   throwableObjects = [];
 
   constructor(canvas, keyboard) {
     this.ctx = canvas.getContext("2d");
     this.canvas = canvas;
     this.keyboard = keyboard;
+    this.character = new Character();
+    this.level = level1; 
+    this.character.world = this; 
     this.draw();
     this.setWorld();
     this.run();
@@ -31,7 +36,10 @@ class World {
 
   checkThrowObjects() {
     if (this.keyboard.D) {
-      let bottle = new ThrowableObject(this.character.x + 100, this.character.y + 100);
+      let bottle = new ThrowableObject(
+        this.character.x + 100,
+        this.character.y + 100
+      );
       this.throwableObjects.push(bottle);
     }
   }
@@ -52,7 +60,10 @@ class World {
     this.addObjectsToMap(this.level.backgroundObjects);
 
     this.ctx.translate(-this.camera_x, 0);
-    this.addToMap(this.statusBar);
+    this.addToMap(this.statusBar); // Health
+    this.addToMap(this.bottleBar); // Bottles
+    this.addToMap(this.coinBar); // Coins
+
     this.ctx.translate(this.camera_x, 0);
 
     this.addToMap(this.character);
@@ -65,6 +76,28 @@ class World {
     let self = this;
     requestAnimationFrame(function () {
       self.draw();
+    });
+  }
+
+  checkItemPickups() {
+    this.level.bottles.forEach((bottle, index) => {
+      if (this.character.isColliding(bottle)) {
+        this.character.collectedBottles++;
+        this.level.bottles.splice(index, 1); // Entferne eingesammelte Flasche
+        this.bottleBar.setPercentage(
+          (this.character.collectedBottles / this.character.maxBottles) * 100
+        );
+      }
+    });
+
+    this.level.coins.forEach((coin, index) => {
+      if (this.character.isColliding(coin)) {
+        this.character.collectedCoins++;
+        this.level.coins.splice(index, 1); // Entferne eingesammelte Münze
+        this.coinBar.setPercentage(
+          (this.character.collectedCoins / this.character.maxCoins) * 100
+        );
+      }
     });
   }
 
