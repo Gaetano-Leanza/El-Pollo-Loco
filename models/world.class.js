@@ -62,9 +62,11 @@ class World {
     });
 
     this.ctx.translate(this.camera_x, 0);
+
     this.addObjectsToMap(this.level.backgroundObjects);
     this.addObjectsToMap(this.level.clouds);
     this.addObjectsToMap(this.level.coins);
+    this.addObjectsToMap(this.level.bottles);
 
     this.ctx.translate(-this.camera_x, 0);
     this.addToMap(this.statusBar);
@@ -121,7 +123,9 @@ class World {
     }
 
     mo.draw(this.ctx);
-    mo.drawFrame(this.ctx);
+    if (typeof mo.drawFrame === "function") {
+      mo.drawFrame(this.ctx);
+    }
 
     if (mo.otherDirection) {
       this.flipImageBack(mo);
