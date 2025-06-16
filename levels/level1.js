@@ -17,7 +17,18 @@ chickens.push(new Endboss());
 const level1 = new Level(
   chickens,
 
-  [new Cloud()],
+  (() => {
+    let clouds = [];
+    let startX = 100;
+    let spacing = 500;
+    let numberOfClouds = 20; 
+
+    for (let i = 0; i < numberOfClouds; i++) {
+      clouds.push(new Cloud(startX + i * spacing));
+    }
+
+    return clouds;
+  })(),
 
   [
     new BackgroundObject("../img/5_background/layers/air.png", -719),

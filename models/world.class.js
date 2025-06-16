@@ -53,37 +53,37 @@ class World {
     });
   }
 
-  draw() {
-    this.ctx.clearRect(0, 0, this.canvas.width, this.canvas.height);
+ draw() {
+  this.ctx.clearRect(0, 0, this.canvas.width, this.canvas.height);
 
-    this.ctx.translate(this.camera_x, 0);
-    this.addObjectsToMap(this.level.backgroundObjects);
+  this.ctx.translate(this.camera_x, 0);
+  this.addObjectsToMap(this.level.backgroundObjects);
+  this.addObjectsToMap(this.level.clouds); 
 
-    this.ctx.translate(-this.camera_x, 0);
-    this.addToMap(this.statusBar); // Health
-    this.addToMap(this.bottleBar); // Bottles
-    this.addToMap(this.coinBar); // Coins
+  this.ctx.translate(-this.camera_x, 0);
+  this.addToMap(this.statusBar); 
+  this.addToMap(this.bottleBar);
+  this.addToMap(this.coinBar); 
 
-    this.ctx.translate(this.camera_x, 0);
+  this.ctx.translate(this.camera_x, 0);
 
-    this.addToMap(this.character);
-    this.addObjectsToMap(this.level.clouds);
-    this.addObjectsToMap(this.level.enemies);
-    this.addObjectsToMap(this.throwableObjects);
+  this.addToMap(this.character);
+  this.addObjectsToMap(this.level.enemies);
+  this.addObjectsToMap(this.throwableObjects);
 
-    this.ctx.translate(-this.camera_x, 0);
+  this.ctx.translate(-this.camera_x, 0);
 
-    let self = this;
-    requestAnimationFrame(function () {
-      self.draw();
-    });
-  }
+  let self = this;
+  requestAnimationFrame(function () {
+    self.draw();
+  });
+}
 
   checkItemPickups() {
     this.level.bottles.forEach((bottle, index) => {
       if (this.character.isColliding(bottle)) {
         this.character.collectedBottles++;
-        this.level.bottles.splice(index, 1); // Entferne eingesammelte Flasche
+        this.level.bottles.splice(index, 1); 
         this.bottleBar.setPercentage(
           (this.character.collectedBottles / this.character.maxBottles) * 100
         );
@@ -93,7 +93,7 @@ class World {
     this.level.coins.forEach((coin, index) => {
       if (this.character.isColliding(coin)) {
         this.character.collectedCoins++;
-        this.level.coins.splice(index, 1); // Entferne eingesammelte Münze
+        this.level.coins.splice(index, 1); 
         this.coinBar.setPercentage(
           (this.character.collectedCoins / this.character.maxCoins) * 100
         );
