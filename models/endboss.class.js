@@ -56,4 +56,22 @@ class Endboss extends MovableObject {
       this.playAnimation(this.IMAGES_ALERT);
     }, 200);
   }
+
+  getHitbox() {
+    return {
+      x: this.x + 40,
+      y: this.y + 100,
+      width: this.width - 80,
+      height: this.height - 150,
+    };
+  }
+
+  takeDamage() {
+    this.health -= 10;
+    if (this.health <= 0) {
+      this.playDeathAnimation();
+    } else {
+      this.playHurtAnimation();
+    }
+  }
 }

@@ -52,6 +52,32 @@ class World {
         this.statusBar.setPercentage(this.character.energy);
       }
     });
+
+    this.throwableObjects.forEach((bottle, index) => {
+      this.level.enemies.forEach((enemy) => {
+        if (bottle.isColliding(enemy) && !bottle.isSplashing) {
+          bottle.splash();
+          enemy.takeDamage();
+
+          if (enemy.isDead()) {
+            this.level.enemies.splice(this.level.enemies.indexOf(enemy), 1);
+          }
+        }
+      });
+
+      if (
+        this.level.endboss &&
+        bottle.isColliding(this.level.endboss) &&
+        !bottle.isSplashing
+      ) {
+        bottle.splash();
+        this.level.endboss.takeDamage();
+      }
+    });
+
+    this.throwableObjects = this.throwableObjects.filter(
+      (bottle) => !bottle.shouldBeRemoved
+    );
   }
 
   draw() {

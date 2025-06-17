@@ -6,9 +6,20 @@ class ThrowableObject extends MovableObject {
     "img/6_salsa_bottle/bottle_rotation/4_bottle_rotation.png",
   ];
 
+  BOTTLE_SPLASH = [
+    "img/6_salsa_bottle/bottle_rotation/bottle_splash/1_bottle_splash.png",
+    "img/6_salsa_bottle/bottle_rotation/bottle_splash/2_bottle_splash.png",
+    "img/6_salsa_bottle/bottle_rotation/bottle_splash/3_bottle_splash.png",
+    "img/6_salsa_bottle/bottle_rotation/bottle_splash/4_bottle_splash.png",
+    "img/6_salsa_bottle/bottle_rotation/bottle_splash/5_bottle_splash.png",
+    "img/6_salsa_bottle/bottle_rotation/bottle_splash/6_bottle_splash.png",
+  ];
+  isSplashing = false;
+
   constructor(x, y) {
     super();
     this.loadImages(this.BOTTLE_ROTATION);
+    this.loadImages(this.BOTTLE_SPLASH);
     this.image = this.imageCache[this.BOTTLE_ROTATION[0]];
     this.x = x;
     this.y = y;
@@ -38,13 +49,36 @@ class ThrowableObject extends MovableObject {
   }
 
   applyGravity() {
+    if (this.isSplashing) return;
+
     this.y += this.speedY;
     this.speedY += this.gravity;
 
     if (this.y + this.height >= this.groundLevel) {
       this.y = this.groundLevel - this.height;
-      this.stopIntervals();
+      this.splash();
     }
+  }
+
+  splash() {
+    if (this.isSplashing) return;
+
+    this.isSplashing = true;
+    this.stopIntervals();
+    this.playSplashAnimation();
+  }
+
+  playSplashAnimation() {
+    this.currentImage = 0;
+    const splashInterval = setInterval(() => {
+      if (this.currentImage < this.BOTTLE_SPLASH.length) {
+        this.img = this.imageCache[this.BOTTLE_SPLASH[this.currentImage]];
+        this.currentImage++;
+      } else {
+        clearInterval(splashInterval);
+        this.shouldBeRemoved = true;
+      }
+    }, 100);
   }
 
   stopIntervals() {

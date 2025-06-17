@@ -27,4 +27,20 @@ class Chicken extends MovableObject {
       this.playAnimation(this.IMAGES_WALKING);
     }, 200);
   }
+
+  getHitbox() {
+    return {
+      x: this.x + 5,
+      y: this.y + 10,
+      width: this.width - 10,
+      height: this.height - 15,
+    };
+  }
+
+  takeDamage() {
+    this.health--;
+    if (this.health <= 0) {
+      this.die();
+    }
+  }
 }
