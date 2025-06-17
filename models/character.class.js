@@ -8,6 +8,8 @@ class Character extends MovableObject {
   hitboxHeightReduction = 0;
   collectedCoins = 0;
   maxCoins = 20;
+  collectedBottles = 0;
+  maxBottles = 20;
 
   IMAGES_WALKING = [
     "../img/2_character_pepe/2_walk/W-21.png",
@@ -62,7 +64,7 @@ class Character extends MovableObject {
     this.hitboxHeightReduction = 160;
     this.applyGravity();
     this.collectedCoins = 0;
-    this.maxCoins = 20; 
+    this.maxCoins = 20;
   }
 
   getHitbox() {

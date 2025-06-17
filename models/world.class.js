@@ -17,6 +17,8 @@ class World {
     this.character = new Character();
     this.level = level1;
     this.character.world = this;
+    this.bottleBar = new StatusBar("bottle", 10, 60);
+    this.bottleBar.setPercentage(0); 
     this.draw();
     this.setWorld();
     this.run();
@@ -119,9 +121,12 @@ class World {
       if (this.character.isColliding(bottle)) {
         this.character.collectedBottles++;
         this.level.bottles.splice(i, 1);
-        this.bottleBar.setPercentage(
-          (this.character.collectedBottles / this.character.maxBottles) * 100
+
+        const bottlePercent = Math.min(
+          100,
+          Math.floor(this.character.collectedBottles / 4) * 20
         );
+        this.bottleBar.setPercentage(bottlePercent);
       }
     }
 
