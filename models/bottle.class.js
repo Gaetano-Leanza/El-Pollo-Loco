@@ -9,6 +9,15 @@ class Bottle extends DrawableObject {
     this.image.src = "img/6_salsa_bottle/1_salsa_bottle_on_ground.png";
   }
 
+ BOTTLE_SPLASH = [
+    "../img/6_salsa_bottle/bottle_rotation/bottle_splash/1_bottle_splash.png",
+    "../img/6_salsa_bottle/bottle_rotation/bottle_splash/2_bottle_splash.png",
+    "../img/6_salsa_bottle/bottle_rotation/bottle_splash/3_bottle_splash.png",
+    "../img/6_salsa_bottle/bottle_rotation/bottle_splash/4_bottle_splash.png",
+    "../img/6_salsa_bottle/bottle_rotation/bottle_splash/5_bottle_splash.png",
+    "../img/6_salsa_bottle/bottle_rotation/bottle_splash/6_bottle_splash.png",
+  ];
+
   draw(ctx) {
     ctx.drawImage(this.image, this.x, this.y, this.width, this.height);
   }
