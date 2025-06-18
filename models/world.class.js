@@ -17,7 +17,7 @@ class World {
     this.character = new Character();
     this.level = level1;
     this.character.world = this;
-    this.lastBottleThrow = 0; 
+    this.lastBottleThrow = 0;
     this.bottleBar = new StatusBar("bottle", 10, 60);
     this.bottleBar.setPercentage(0);
     this.draw();
@@ -35,52 +35,55 @@ class World {
       this.checkCollisions();
       this.checkThrowObjects();
       this.checkItemPickups();
+      this.removeDeadEnemies();
     }, 100);
   }
 
- checkThrowObjects() {
-  const now = Date.now();
-  const throwCooldown = 500; 
-
-  if (
-    this.keyboard.D &&
-    this.character.collectedBottles > 0 &&
-    now - this.lastBottleThrow > throwCooldown
-  ) {
-    let bottle = new ThrowableObject(
-      this.character.x + 100,
-      this.character.y + 100
+  removeDeadEnemies() {
+    this.level.enemies = this.level.enemies.filter(
+      (enemy) => !enemy.shouldBeRemoved
     );
-    this.throwableObjects.push(bottle);
-
-    this.character.collectedBottles--;
-    this.lastBottleThrow = now;
-
-    const bottlePercent = Math.min(
-      100,
-      Math.floor(this.character.collectedBottles / 4) * 20
-    );
-    this.bottleBar.setPercentage(bottlePercent);
   }
-}
+
+  checkThrowObjects() {
+    const now = Date.now();
+    const throwCooldown = 500;
+
+    if (
+      this.keyboard.D &&
+      this.character.collectedBottles > 0 &&
+      now - this.lastBottleThrow > throwCooldown
+    ) {
+      let bottle = new ThrowableObject(
+        this.character.x + 100,
+        this.character.y + 100
+      );
+      this.throwableObjects.push(bottle);
+
+      this.character.collectedBottles--;
+      this.lastBottleThrow = now;
+
+      const bottlePercent = Math.min(
+        100,
+        Math.floor(this.character.collectedBottles / 4) * 20
+      );
+      this.bottleBar.setPercentage(bottlePercent);
+    }
+  }
 
   checkCollisions() {
     this.level.enemies.forEach((enemy) => {
-      if (this.character.isColliding(enemy)) {
+      if (this.character.isColliding(enemy) && !enemy.isDead) {
         this.character.hit();
         this.statusBar.setPercentage(this.character.energy);
       }
     });
 
-    this.throwableObjects.forEach((bottle, index) => {
+    this.throwableObjects.forEach((bottle) => {
       this.level.enemies.forEach((enemy) => {
-        if (bottle.isColliding(enemy) && !bottle.isSplashing) {
+        if (bottle.isColliding(enemy) && !bottle.isSplashing && !enemy.isDead) {
           bottle.splash();
           enemy.takeDamage();
-
-          if (enemy.isDead()) {
-            this.level.enemies.splice(this.level.enemies.indexOf(enemy), 1);
-          }
         }
       });
 
