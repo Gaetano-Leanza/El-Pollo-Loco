@@ -9,7 +9,9 @@ for (let i = 0; i < 9; i++) {
   let positionInGroup = i % chickensPerGroup;
 
   let x = startX + group * groupSpacing + positionInGroup * chickenSpacing;
-  chickens.push(new Chicken(x));
+
+  chickens.push(new Chicken(x)); // normale Chicken
+  chickens.push(new ChickenSmall(x + 500)); // kleine Chicken 500px weiter rechts
 }
 
 chickens.push(new Endboss());
