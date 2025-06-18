@@ -57,6 +57,12 @@ h2 {
   transition: opacity 0.3s ease, transform 0.3s ease;
 }
 
+canvas:fullscreen {
+  width: 100vw;
+  height: 100vh;
+  display: block;
+}
+
 canvas {
   background-color: black;
   display: block;

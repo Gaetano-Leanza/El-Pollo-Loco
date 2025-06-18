@@ -17,8 +17,9 @@ class World {
     this.character = new Character();
     this.level = level1;
     this.character.world = this;
+    this.lastBottleThrow = 0; 
     this.bottleBar = new StatusBar("bottle", 10, 60);
-    this.bottleBar.setPercentage(0); 
+    this.bottleBar.setPercentage(0);
     this.draw();
     this.setWorld();
     this.run();
@@ -37,15 +38,31 @@ class World {
     }, 100);
   }
 
-  checkThrowObjects() {
-    if (this.keyboard.D) {
-      let bottle = new ThrowableObject(
-        this.character.x + 100,
-        this.character.y + 100
-      );
-      this.throwableObjects.push(bottle);
-    }
+ checkThrowObjects() {
+  const now = Date.now();
+  const throwCooldown = 500; 
+
+  if (
+    this.keyboard.D &&
+    this.character.collectedBottles > 0 &&
+    now - this.lastBottleThrow > throwCooldown
+  ) {
+    let bottle = new ThrowableObject(
+      this.character.x + 100,
+      this.character.y + 100
+    );
+    this.throwableObjects.push(bottle);
+
+    this.character.collectedBottles--;
+    this.lastBottleThrow = now;
+
+    const bottlePercent = Math.min(
+      100,
+      Math.floor(this.character.collectedBottles / 4) * 20
+    );
+    this.bottleBar.setPercentage(bottlePercent);
   }
+}
 
   checkCollisions() {
     this.level.enemies.forEach((enemy) => {

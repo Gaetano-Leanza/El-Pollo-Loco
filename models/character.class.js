@@ -79,20 +79,28 @@ class Character extends MovableObject {
   animate() {
     setInterval(() => {
       this.walking_sound.pause();
+
       if (this.world.keyboard.RIGHT && this.x < this.world.level.level_end_x) {
         this.moveRight();
         this.otherDirection = false;
       }
+
       if (this.world.keyboard.LEFT && this.x > 0) {
         this.moveLeft();
         this.otherDirection = true;
       }
+
       if (this.world.keyboard.SPACE && !this.isAboveGround()) {
         this.jump();
       }
+
       this.world.camera_x = -this.x + 100;
     }, 1000 / 60);
 
+    this.playCharacterAnimation();
+  }
+
+  playCharacterAnimation() {
     setInterval(() => {
       if (this.isDead()) {
         this.playAnimation(this.IMAGES_DEAD);
@@ -106,5 +114,15 @@ class Character extends MovableObject {
         }
       }
     }, 50);
+  }
+
+  throwBottle() {
+    if (this.collectedBottles > 0) {
+      const bottle = new ThrowableObject(this.x + this.width / 2, this.y);
+      this.world.throwableObjects.push(bottle);
+      this.collectedBottles--;
+    } else {
+      console.log("Keine Flaschen mehr zum Werfen!");
+    }
   }
 }
