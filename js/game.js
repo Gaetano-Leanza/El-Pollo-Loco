@@ -64,3 +64,20 @@ function toggleFullscreen(element) {
     exitFullscreen();
   }
 }
+
+function showStartScreen() {
+  let canvas = document.getElementById("canvas");
+  let ctx = canvas.getContext("2d");
+  let startImage = new Image();
+  startImage.src = "../img/9_intro_outro_screens/start/startscreen_1.png";
+
+  startImage.onload = () => {
+    ctx.drawImage(startImage, 0, 0, canvas.width, canvas.height);
+  };
+}
+
+function startGame() {
+  document.getElementById("startButton").style.display = "none";
+  document.getElementById("controlsImage").style.display = "block";
+  init(); 
+}

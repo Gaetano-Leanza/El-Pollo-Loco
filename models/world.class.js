@@ -34,7 +34,7 @@ class World {
   run() {
     setInterval(() => {
       this.checkEnemyCollisions();
-    }, 1000 / 120);
+    }, 1000 / 144);
 
     setInterval(() => {
       this.checkThrowObjects();
