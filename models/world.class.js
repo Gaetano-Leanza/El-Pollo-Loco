@@ -9,6 +9,8 @@ class World {
   bottleBar = new StatusBar("bottle", 10, 60);
   coinBar = new StatusBar("coin", 10, 120);
   throwableObjects = [];
+  lastBottleThrow = 0;
+  DEBUG_MODE = true;
 
   constructor(canvas, keyboard) {
     this.ctx = canvas.getContext("2d");
@@ -17,7 +19,6 @@ class World {
     this.character = new Character();
     this.level = level1;
     this.character.world = this;
-    this.lastBottleThrow = 0;
     this.bottleBar = new StatusBar("bottle", 10, 60);
     this.bottleBar.setPercentage(0);
     this.draw();
@@ -32,11 +33,66 @@ class World {
 
   run() {
     setInterval(() => {
-      this.checkCollisions();
+      this.checkEnemyCollisions();
+    }, 1000 / 120);
+
+    setInterval(() => {
       this.checkThrowObjects();
       this.checkItemPickups();
+      this.checkProjectileCollisions();
       this.removeDeadEnemies();
     }, 100);
+  }
+
+  checkEnemyCollisions() {
+    this.level.enemies.forEach((enemy) => {
+      if (!enemy.isDead && this.character.isColliding(enemy)) {
+        this.handleCharacterEnemyCollision(enemy);
+      }
+    });
+  }
+
+  handleCharacterEnemyCollision(enemy) {
+    const charBox = this.character.getHitbox();
+    const enemyBox = enemy.getHitbox();
+    const characterBottom = charBox.y + charBox.height;
+    const enemyTop = enemyBox.y;
+    const verticalDistance = characterBottom - enemyTop;
+    const fallingSpeed = this.character.speedY;
+    const maxTolerance = 30;
+    const isAbove = charBox.y < enemyBox.y;
+    const isFalling = fallingSpeed < 0;
+    const isSmallOverlap =
+      verticalDistance < maxTolerance && verticalDistance > 0;
+
+    if (this.DEBUG_MODE) {
+      console.log(
+        `Vertical distance: ${verticalDistance}, Falling: ${isFalling}`
+      );
+    }
+
+    if (isAbove && isFalling && isSmallOverlap) {
+      enemy.takeDamage();
+      this.character.speedY = 20;
+      if (this.character.x < enemy.x) {
+        this.character.x -= 15;
+      } else {
+        this.character.x += 15;
+      }
+
+      if (this.DEBUG_MODE) {
+        console.log("Chicken killed by jump!");
+      }
+    } else {
+      if (!this.character.isHurt()) {
+        this.character.hit();
+        this.statusBar.setPercentage(this.character.energy);
+
+        if (this.DEBUG_MODE) {
+          console.log("Character hurt by chicken!");
+        }
+      }
+    }
   }
 
   removeDeadEnemies() {
@@ -55,9 +111,10 @@ class World {
       now - this.lastBottleThrow > throwCooldown
     ) {
       let bottle = new ThrowableObject(
-        this.character.x + 100,
+        this.character.x + (this.character.otherDirection ? -20 : 100),
         this.character.y + 100
       );
+      bottle.otherDirection = this.character.otherDirection;
       this.throwableObjects.push(bottle);
 
       this.character.collectedBottles--;
@@ -65,23 +122,16 @@ class World {
 
       const bottlePercent = Math.min(
         100,
-        Math.floor(this.character.collectedBottles / 4) * 20
+        (this.character.collectedBottles / this.character.maxBottles) * 100
       );
       this.bottleBar.setPercentage(bottlePercent);
     }
   }
 
-  checkCollisions() {
-    this.level.enemies.forEach((enemy) => {
-      if (this.character.isColliding(enemy) && !enemy.isDead) {
-        this.character.hit();
-        this.statusBar.setPercentage(this.character.energy);
-      }
-    });
-
+  checkProjectileCollisions() {
     this.throwableObjects.forEach((bottle) => {
       this.level.enemies.forEach((enemy) => {
-        if (bottle.isColliding(enemy) && !bottle.isSplashing && !enemy.isDead) {
+        if (!enemy.isDead && bottle.isColliding(enemy) && !bottle.isSplashing) {
           bottle.splash();
           enemy.takeDamage();
         }
@@ -89,6 +139,7 @@ class World {
 
       if (
         this.level.endboss &&
+        !this.level.endboss.isDead &&
         bottle.isColliding(this.level.endboss) &&
         !bottle.isSplashing
       ) {
@@ -116,44 +167,41 @@ class World {
     this.addObjectsToMap(this.level.coins);
     this.addObjectsToMap(this.level.bottles);
 
-    this.ctx.translate(-this.camera_x, 0);
-    this.addToMap(this.statusBar);
-    this.addToMap(this.bottleBar);
-    this.addToMap(this.coinBar);
-
-    this.ctx.translate(this.camera_x, 0);
-
     this.addToMap(this.character);
     this.addObjectsToMap(this.level.enemies);
     this.addObjectsToMap(this.throwableObjects);
 
     this.ctx.translate(-this.camera_x, 0);
 
-    let self = this;
-    requestAnimationFrame(function () {
-      self.draw();
-    });
+    this.addToMap(this.statusBar);
+    this.addToMap(this.bottleBar);
+    this.addToMap(this.coinBar);
+
+    requestAnimationFrame(() => this.draw());
   }
 
   checkItemPickups() {
     for (let i = this.level.bottles.length - 1; i >= 0; i--) {
       const bottle = this.level.bottles[i];
       if (this.character.isColliding(bottle)) {
-        this.character.collectedBottles++;
-        this.level.bottles.splice(i, 1);
-
-        const bottlePercent = Math.min(
-          100,
-          Math.floor(this.character.collectedBottles / 4) * 20
+        this.character.collectedBottles = Math.min(
+          this.character.collectedBottles + 1,
+          this.character.maxBottles
         );
-        this.bottleBar.setPercentage(bottlePercent);
+        this.level.bottles.splice(i, 1);
+        this.bottleBar.setPercentage(
+          (this.character.collectedBottles / this.character.maxBottles) * 100
+        );
       }
     }
 
     for (let i = this.level.coins.length - 1; i >= 0; i--) {
       const coin = this.level.coins[i];
       if (this.character.isColliding(coin)) {
-        this.character.collectedCoins++;
+        this.character.collectedCoins = Math.min(
+          this.character.collectedCoins + 1,
+          this.character.maxCoins
+        );
         this.level.coins.splice(i, 1);
         this.coinBar.setPercentage(
           (this.character.collectedCoins / this.character.maxCoins) * 100
@@ -163,9 +211,7 @@ class World {
   }
 
   addObjectsToMap(objects) {
-    objects.forEach((o) => {
-      this.addToMap(o);
-    });
+    objects.forEach((o) => this.addToMap(o));
   }
 
   addToMap(mo) {
@@ -174,7 +220,8 @@ class World {
     }
 
     mo.draw(this.ctx);
-    if (typeof mo.drawFrame === "function") {
+
+    if (this.DEBUG_MODE) {
       mo.drawFrame(this.ctx);
     }
 

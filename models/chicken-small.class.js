@@ -2,9 +2,9 @@ class ChickenSmall extends BaseChicken {
   constructor(xOffset) {
     super(
       xOffset,
-      50, // width
-      40, // height
-      380, // y-position
+      50, 
+      40, 
+      380, 
       [
         "../img/3_enemies_chicken/chicken_small/1_walk/1_w.png",
         "../img/3_enemies_chicken/chicken_small/1_walk/2_w.png",
