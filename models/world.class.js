@@ -10,7 +10,8 @@ class World {
   coinBar = new StatusBar("coin", 10, 120);
   throwableObjects = [];
   lastBottleThrow = 0;
-  DEBUG_MODE = true;
+  DEBUG_MODE = false;
+  endboss;
 
   constructor(canvas, keyboard) {
     this.ctx = canvas.getContext("2d");
@@ -21,6 +22,7 @@ class World {
     this.character.world = this;
     this.bottleBar = new StatusBar("bottle", 10, 60);
     this.bottleBar.setPercentage(0);
+    this.endboss = this.level.endboss;
     this.draw();
     this.setWorld();
     this.run();
@@ -99,6 +101,10 @@ class World {
     this.level.enemies = this.level.enemies.filter(
       (enemy) => !enemy.shouldBeRemoved
     );
+
+    if (this.endboss && this.endboss.isDead()) {
+      this.endboss = null;
+    }
   }
 
   checkThrowObjects() {
@@ -112,7 +118,8 @@ class World {
     ) {
       let bottle = new ThrowableObject(
         this.character.x + (this.character.otherDirection ? -20 : 100),
-        this.character.y + 100
+        this.character.y + 100,
+        this.character.otherDirection
       );
       bottle.otherDirection = this.character.otherDirection;
       this.throwableObjects.push(bottle);
@@ -132,19 +139,20 @@ class World {
     this.throwableObjects.forEach((bottle) => {
       this.level.enemies.forEach((enemy) => {
         if (!enemy.isDead && bottle.isColliding(enemy) && !bottle.isSplashing) {
-          bottle.splash();
+          bottle.splash("enemy");
           enemy.takeDamage();
         }
       });
 
-      if (
-        this.level.endboss &&
-        !this.level.endboss.isDead &&
-        bottle.isColliding(this.level.endboss) &&
-        !bottle.isSplashing
-      ) {
-        bottle.splash();
-        this.level.endboss.takeDamage();
+      if (this.endboss && !this.endboss.isDead() && !bottle.isSplashing) {
+        if (bottle.isColliding(this.endboss)) {
+          bottle.splash("endboss");
+          this.endboss.takeDamage();
+
+          if (this.DEBUG_MODE) {
+            console.log("Endboss getroffen! Energie:", this.endboss.health);
+          }
+        }
       }
     });
 
@@ -156,6 +164,12 @@ class World {
   draw() {
     this.ctx.clearRect(0, 0, this.canvas.width, this.canvas.height);
 
+    if (this.endboss && this.character.x > 3000) {
+      this.camera_x = -this.endboss.x + 400;
+    } else {
+      this.camera_x = -this.character.x + 100;
+    }
+
     this.level.coins.forEach((coin) => {
       coin.update();
     });
@@ -166,9 +180,14 @@ class World {
     this.addObjectsToMap(this.level.clouds);
     this.addObjectsToMap(this.level.coins);
     this.addObjectsToMap(this.level.bottles);
+    this.addObjectsToMap(this.level.enemies);
 
     this.addToMap(this.character);
-    this.addObjectsToMap(this.level.enemies);
+
+    if (this.endboss) {
+      this.addToMap(this.endboss);
+    }
+
     this.addObjectsToMap(this.throwableObjects);
 
     this.ctx.translate(-this.camera_x, 0);

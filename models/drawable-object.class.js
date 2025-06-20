@@ -17,7 +17,12 @@ class DrawableObject {
   }
 
   drawFrame(ctx) {
-    if (this instanceof Character || this instanceof Chicken) {
+    if (
+      this instanceof Character ||
+      this instanceof Chicken ||
+      this instanceof ChickenSmall ||
+      this instanceof Endboss
+    ) {
       const hb = this.getHitbox();
       ctx.beginPath();
       ctx.lineWidth = "3";

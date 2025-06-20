@@ -81,4 +81,13 @@ class MovableObject extends DrawableObject {
   jump() {
     this.speedY = 30;
   }
+
+  drawFrame(ctx) {
+    ctx.beginPath();
+    ctx.lineWidth = "2";
+    ctx.strokeStyle = "red";
+    const box = this.getHitbox ? this.getHitbox() : this;
+    ctx.rect(box.x, box.y, box.width, box.height);
+    ctx.stroke();
+  }
 }

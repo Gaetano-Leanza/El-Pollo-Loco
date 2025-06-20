@@ -44,34 +44,80 @@ class Endboss extends MovableObject {
     "img/4_enemie_boss_chicken/5_dead/G26.png",
   ];
 
+  health = 100;
+  isHurt = false;
+  isDead = false;
+  animationInterval;
+  hurtAnimationTimeout;
+
   constructor() {
-    super().loadImage(this.IMAGES_ALERT[0]);
+    super();
+    this.loadImage(this.IMAGES_ALERT[0]);
     this.loadImages(this.IMAGES_ALERT);
+    this.loadImages(this.IMAGES_WALK);
+    this.loadImages(this.IMAGES_ATTACK);
+    this.loadImages(this.IMAGES_HURT);
+    this.loadImages(this.IMAGES_DEAD);
     this.x = 4000;
     this.animate();
   }
 
   animate() {
-    setInterval(() => {
-      this.playAnimation(this.IMAGES_ALERT);
+    this.animationInterval = setInterval(() => {
+      if (this.isDead) {
+        this.playDeathAnimation();
+      } else if (this.isHurt) {
+        this.playHurtAnimation();
+      } else {
+        this.playAlertAnimation();
+      }
     }, 200);
+  }
+
+  playAlertAnimation() {
+    this.playAnimation(this.IMAGES_ALERT);
+  }
+
+  playHurtAnimation() {
+    this.playAnimation(this.IMAGES_HURT);
+    if (this.hurtAnimationTimeout) {
+      clearTimeout(this.hurtAnimationTimeout);
+    }
+    this.hurtAnimationTimeout = setTimeout(() => {
+      this.isHurt = false;
+    }, this.IMAGES_HURT.length * 200);
+  }
+
+  playDeathAnimation() {
+    this.playAnimation(this.IMAGES_DEAD);
+    setTimeout(() => {
+      clearInterval(this.animationInterval);
+      this.shouldBeRemoved = true;
+    }, this.IMAGES_DEAD.length * 200);
+  }
+
+  takeDamage() {
+    if (this.isDead) return;
+    this.health -= 10;
+    if (this.health <= 0) {
+      this.health = 0;
+      this.isDead = true;
+      this.playDeathAnimation();
+    } else {
+      this.isHurt = true;
+    }
+  }
+
+  isDead() {
+    return this.health <= 0;
   }
 
   getHitbox() {
     return {
-      x: this.x + 40,
-      y: this.y + 100,
+      x: this.x + 50,
+      y: this.y + 120,
       width: this.width - 80,
       height: this.height - 150,
     };
-  }
-
-  takeDamage() {
-    this.health -= 10;
-    if (this.health <= 0) {
-      this.playDeathAnimation();
-    } else {
-      this.playHurtAnimation();
-    }
   }
 }
