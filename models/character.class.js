@@ -1,7 +1,7 @@
 class Character extends MovableObject {
   height = 280;
   y = 80;
-  speed = 10;
+  speed = 10;  
   hitboxOffsetX = 0;
   hitboxOffsetY = 0;
   hitboxWidthReduction = 0;
@@ -78,15 +78,17 @@ class Character extends MovableObject {
 
   animate() {
     setInterval(() => {
-      this.walking_sound.pause();
+      if (!this.world.keyboard.RIGHT && !this.world.keyboard.LEFT) {
+        this.walking_sound.pause();
+      }
 
       if (this.world.keyboard.RIGHT && this.x < this.world.level.level_end_x) {
-        this.moveRight();
+        this.moveRight();  
         this.otherDirection = false;
       }
 
       if (this.world.keyboard.LEFT && this.x > 0) {
-        this.moveLeft();
+        this.moveLeft();  
         this.otherDirection = true;
       }
 
@@ -104,15 +106,24 @@ class Character extends MovableObject {
     setInterval(() => {
       if (this.isDead()) {
         this.playAnimation(this.IMAGES_DEAD);
-      } else if (this.isHurt()) {
-        this.playAnimation(this.IMAGES_HURT);
-      } else if (this.isAboveGround()) {
-        this.playAnimation(this.IMAGES_JUMPING);
-      } else {
-        if (this.world.keyboard.RIGHT || this.world.keyboard.LEFT) {
-          this.playAnimation(this.IMAGES_WALKING);
-        }
+        return;
       }
+
+      if (this.isHurt()) {
+        this.playAnimation(this.IMAGES_HURT);
+        return;
+      }
+
+      if (this.isAboveGround()) {
+        this.playAnimation(this.IMAGES_JUMPING);
+        return;
+      }
+
+      if (this.world.keyboard.RIGHT || this.world.keyboard.LEFT) {
+        this.playAnimation(this.IMAGES_WALKING);
+        return;
+      }
+
     }, 50);
   }
 

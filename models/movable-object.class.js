@@ -5,6 +5,7 @@ class MovableObject extends DrawableObject {
   acceleration = 2.5;
   energy = 100;
   lastHit = 0;
+  currentImage = 0;
 
   applyGravity() {
     setInterval(() => {
@@ -72,8 +73,9 @@ class MovableObject extends DrawableObject {
   }
 
   playAnimation(images) {
-    let i = this.currentImage % images.length;
-    let path = images[i];
+    if (!images || images.length === 0) return;
+    this.currentImage = this.currentImage % images.length;
+    let path = images[this.currentImage];
     this.img = this.imageCache[path];
     this.currentImage++;
   }

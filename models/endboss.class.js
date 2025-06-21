@@ -1,7 +1,9 @@
 class Endboss extends MovableObject {
   height = 400;
   width = 250;
+  speed = 1;      
   y = 62;
+  x = 3800;        
 
   IMAGES_WALK = [
     "img/4_enemie_boss_chicken/1_walk/G1.png",
@@ -48,7 +50,8 @@ class Endboss extends MovableObject {
   isHurt = false;
   isDead = false;
   animationInterval;
-  hurtAnimationTimeout;
+  hurtFrameIndex = 0;
+  hurtAnimationPlaying = false;
 
   constructor() {
     super();
@@ -78,15 +81,22 @@ class Endboss extends MovableObject {
     this.playAnimation(this.IMAGES_ALERT);
   }
 
-  playHurtAnimation() {
-    this.playAnimation(this.IMAGES_HURT);
-    if (this.hurtAnimationTimeout) {
-      clearTimeout(this.hurtAnimationTimeout);
-    }
-    this.hurtAnimationTimeout = setTimeout(() => {
-      this.isHurt = false;
-    }, this.IMAGES_HURT.length * 200);
+playHurtAnimation() {
+  if (!this.hurtAnimationPlaying) {
+    this.hurtAnimationPlaying = true;
+    this.hurtFrameIndex = 0;
   }
+
+  this.loadImage(this.IMAGES_HURT[this.hurtFrameIndex]);
+
+  if (this.hurtFrameIndex < this.IMAGES_HURT.length - 1) {
+    this.hurtFrameIndex++;
+  } else {
+    this.isHurt = false;
+    this.hurtAnimationPlaying = false;
+  }
+}
+
 
   playDeathAnimation() {
     this.playAnimation(this.IMAGES_DEAD);
@@ -105,6 +115,7 @@ class Endboss extends MovableObject {
       this.playDeathAnimation();
     } else {
       this.isHurt = true;
+      this.hurtAnimationPlaying = false;  
     }
   }
 
@@ -119,5 +130,16 @@ class Endboss extends MovableObject {
       width: this.width - 80,
       height: this.height - 150,
     };
+  }
+
+  playAnimation(images) {
+    if (!this.currentFrameIndex) this.currentFrameIndex = 0;
+
+    this.loadImage(images[this.currentFrameIndex]);
+    this.currentFrameIndex++;
+
+    if (this.currentFrameIndex >= images.length) {
+      this.currentFrameIndex = 0;
+    }
   }
 }
