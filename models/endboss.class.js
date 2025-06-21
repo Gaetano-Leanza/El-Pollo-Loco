@@ -1,9 +1,9 @@
 class Endboss extends MovableObject {
   height = 400;
   width = 250;
-  speed = 1;      
+  speed = 0.2;
   y = 62;
-  x = 3800;        
+  x = 3800;
 
   IMAGES_WALK = [
     "img/4_enemie_boss_chicken/1_walk/G1.png",
@@ -49,9 +49,14 @@ class Endboss extends MovableObject {
   health = 100;
   isHurt = false;
   isDead = false;
+  isWalking = false;
+  isAlerted = false;
   animationInterval;
+  movementAnimationId;
+
   hurtFrameIndex = 0;
   hurtAnimationPlaying = false;
+  currentFrameIndex = 0;
 
   constructor() {
     super();
@@ -63,6 +68,7 @@ class Endboss extends MovableObject {
     this.loadImages(this.IMAGES_DEAD);
     this.x = 4000;
     this.animate();
+    this.startMovement();
   }
 
   animate() {
@@ -71,37 +77,90 @@ class Endboss extends MovableObject {
         this.playDeathAnimation();
       } else if (this.isHurt) {
         this.playHurtAnimation();
+      } else if (this.isAlerted) {
+        this.playAlertAnimation();
+      } else if (this.isWalking) {
+        this.playWalkAnimation();
       } else {
         this.playAlertAnimation();
       }
     }, 200);
   }
 
+  startMovement() {
+    const move = () => {
+      if (this.isDead) {
+        cancelAnimationFrame(this.movementAnimationId);
+        return;
+      }
+
+      if (window.character) {
+        const distance = Math.abs(this.x - character.x);
+
+        if (distance < 400) {
+          this.isWalking = true;
+          this.moveTowardsCharacter();
+        } else {
+          this.isWalking = false;
+        }
+      }
+
+      this.movementAnimationId = requestAnimationFrame(move);
+    };
+    move();
+  }
+
+  moveTowardsCharacter() {
+    if (!window.character || this.isDead) return;
+
+    const distanceX = character.x - this.x;
+
+    if (distanceX > 0) {
+      this.x += this.speed;
+      this.otherDirection = false;
+      console.log(`Endboss bewegt sich: x = ${this.x}, Richtung = rechts`);
+    } else if (distanceX < 0) {
+      this.x -= this.speed;
+      this.otherDirection = true;
+      console.log(`Endboss bewegt sich: x = ${this.x}, Richtung = links`);
+    }
+  }
+
   playAlertAnimation() {
     this.playAnimation(this.IMAGES_ALERT);
   }
 
-playHurtAnimation() {
-  if (!this.hurtAnimationPlaying) {
-    this.hurtAnimationPlaying = true;
-    this.hurtFrameIndex = 0;
+  playWalkAnimation() {
+    this.playAnimation(this.IMAGES_WALK);
   }
 
-  this.loadImage(this.IMAGES_HURT[this.hurtFrameIndex]);
+  playHurtAnimation() {
+    if (!this.hurtAnimationPlaying) {
+      this.hurtAnimationPlaying = true;
+      this.hurtFrameIndex = 0;
+    }
 
-  if (this.hurtFrameIndex < this.IMAGES_HURT.length - 1) {
-    this.hurtFrameIndex++;
-  } else {
-    this.isHurt = false;
-    this.hurtAnimationPlaying = false;
+    this.loadImage(this.IMAGES_HURT[this.hurtFrameIndex]);
+
+    if (this.hurtFrameIndex < this.IMAGES_HURT.length - 1) {
+      this.hurtFrameIndex++;
+    } else {
+      this.isHurt = false;
+      this.hurtAnimationPlaying = false;
+      this.isAlerted = true;
+
+      setTimeout(() => {
+        this.isAlerted = false;
+        this.isWalking = true;
+      }, 1000);
+    }
   }
-}
-
 
   playDeathAnimation() {
     this.playAnimation(this.IMAGES_DEAD);
     setTimeout(() => {
       clearInterval(this.animationInterval);
+      cancelAnimationFrame(this.movementAnimationId);
       this.shouldBeRemoved = true;
     }, this.IMAGES_DEAD.length * 200);
   }
@@ -109,18 +168,25 @@ playHurtAnimation() {
   takeDamage() {
     if (this.isDead) return;
     this.health -= 10;
+
     if (this.health <= 0) {
       this.health = 0;
       this.isDead = true;
       this.playDeathAnimation();
     } else {
       this.isHurt = true;
-      this.hurtAnimationPlaying = false;  
+      this.hurtAnimationPlaying = false;
+      this.isWalking = false;
     }
   }
 
-  isDead() {
-    return this.health <= 0;
+  playAnimation(images) {
+    if (this.currentFrameIndex >= images.length) {
+      this.currentFrameIndex = 0;
+    }
+
+    this.loadImage(images[this.currentFrameIndex]);
+    this.currentFrameIndex++;
   }
 
   getHitbox() {
@@ -130,16 +196,5 @@ playHurtAnimation() {
       width: this.width - 80,
       height: this.height - 150,
     };
-  }
-
-  playAnimation(images) {
-    if (!this.currentFrameIndex) this.currentFrameIndex = 0;
-
-    this.loadImage(images[this.currentFrameIndex]);
-    this.currentFrameIndex++;
-
-    if (this.currentFrameIndex >= images.length) {
-      this.currentFrameIndex = 0;
-    }
   }
 }

@@ -21,6 +21,7 @@ class World {
     this.canvas = canvas;
     this.keyboard = keyboard;
     this.character = new Character();
+    window.character = this.character;
     this.level = level1;
     this.character.world = this;
     this.bottleBar.setPercentage(0);
@@ -56,27 +57,34 @@ class World {
       this.startEndbossBattle();
     }
 
-    this.camera_x =
-      this.endboss && this.character.x > 3000
-        ? -this.endboss.x + 400
-        : -this.character.x + 100;
+    this.camera_x = this.endbossActivated
+      ? -this.endboss.x + 400
+      : -this.character.x + 100;
 
     this.level.coins.forEach((coin) => coin.update());
 
+    this.ctx.save();
     this.ctx.translate(this.camera_x, 0);
+
     this.addObjectsToMap(this.level.backgroundObjects);
     this.addObjectsToMap(this.level.clouds);
     this.addObjectsToMap(this.level.coins);
     this.addObjectsToMap(this.level.bottles);
     this.addObjectsToMap(this.level.enemies);
-    this.addToMap(this.character);
-    if (this.endboss) this.addToMap(this.endboss);
-    this.addObjectsToMap(this.throwableObjects);
-    this.ctx.translate(-this.camera_x, 0);
 
-    this.addToMap(this.statusBar);
-    this.addToMap(this.bottleBar);
-    this.addToMap(this.coinBar);
+    this.addToMap(this.character);
+
+    if (this.endboss) {
+      this.addToMap(this.endboss);
+    }
+
+    this.addObjectsToMap(this.throwableObjects);
+
+    this.ctx.restore();
+
+    this.statusBar.draw(this.ctx);
+    this.bottleBar.draw(this.ctx);
+    this.coinBar.draw(this.ctx);
 
     requestAnimationFrame(() => this.draw());
   }
@@ -100,11 +108,12 @@ class World {
 
     if (this.currentState === "alert") {
       this.endboss.playCustomAnimation(this.endboss.IMAGES_ALERT, 150, () => {
-        this.currentState = "attack";
+        this.currentState = "walking";
         this.cycleEndbossAnimation();
       });
-    } else if (this.currentState === "attack") {
-      this.endboss.playCustomAnimation(this.endboss.IMAGES_ATTACK, 150, () => {
+    } else if (this.currentState === "walking") {
+    } else if (this.currentState === "hurt") {
+      this.endboss.playCustomAnimation(this.endboss.IMAGES_HURT, 100, () => {
         this.currentState = "alert";
         this.cycleEndbossAnimation();
       });
@@ -112,7 +121,8 @@ class World {
   }
 
   moveEndbossTowardCharacter() {
-    if (!this.endboss || !this.character) return;
+    if (!this.endboss || !this.character || this.currentState !== "walking")
+      return;
 
     const distance = this.character.x - this.endboss.x;
     const speed = 3;
@@ -153,22 +163,14 @@ class World {
     const isSmallOverlap =
       verticalDistance < maxTolerance && verticalDistance > 0;
 
-    if (this.DEBUG_MODE) {
-      console.log(
-        `Vertical distance: ${verticalDistance}, Falling: ${isFalling}`
-      );
-    }
-
     if (isAbove && isFalling && isSmallOverlap) {
       enemy.takeDamage();
       this.character.speedY = 20;
       this.character.x += this.character.x < enemy.x ? -15 : 15;
-      if (this.DEBUG_MODE) console.log("Chicken killed by jump!");
     } else {
       if (!this.character.isHurt()) {
         this.character.hit();
         this.statusBar.setPercentage(this.character.energy);
-        if (this.DEBUG_MODE) console.log("Character hurt by chicken!");
       }
     }
   }
@@ -224,6 +226,11 @@ class World {
           if (this.DEBUG_MODE) {
             console.log("Endboss getroffen! Energie:", this.endboss.health);
           }
+
+          if (!this.endboss.isPlayingCustomAnimation) {
+            this.currentState = "hurt";
+            this.cycleEndbossAnimation();
+          }
         }
       }
     });
@@ -268,21 +275,38 @@ class World {
   }
 
   addToMap(mo) {
-    if (mo.otherDirection) this.flipImage(mo);
+    this.ctx.save();
+
+    if (mo.otherDirection) {
+      if (mo.constructor.name === "Endboss" || mo === this.endboss) {
+        this.ctx.translate(mo.x + mo.width / 2, 0);
+        this.ctx.scale(1, 1);
+        this.ctx.translate(-(mo.x + mo.width / 2), 0);
+      } else {
+        this.ctx.translate(mo.x + mo.width / 2, 0);
+        this.ctx.scale(-1, 1);
+        this.ctx.translate(-(mo.x + mo.width / 2), 0);
+      }
+    }
+
     mo.draw(this.ctx);
-    if (this.DEBUG_MODE) mo.drawFrame(this.ctx);
-    if (mo.otherDirection) this.flipImageBack(mo);
+
+    if (this.DEBUG_MODE) {
+      mo.drawFrame(this.ctx);
+    }
+
+    this.ctx.restore();
   }
 
   flipImage(mo) {
     this.ctx.save();
-    this.ctx.translate(mo.width, 0);
+    const screenX = mo.x + this.camera_x;
+    this.ctx.translate(screenX + mo.width / 2, 0);
     this.ctx.scale(-1, 1);
-    mo.x *= -1;
+    this.ctx.translate(-(screenX + mo.width / 2), 0);
   }
 
-  flipImageBack(mo) {
-    mo.x *= -1;
+  flipImageBack() {
     this.ctx.restore();
   }
 }
