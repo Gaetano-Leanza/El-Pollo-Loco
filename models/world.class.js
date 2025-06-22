@@ -120,28 +120,6 @@ class World {
     }
   }
 
-  moveEndbossTowardCharacter() {
-    if (!this.endboss || !this.character || this.currentState !== "walking")
-      return;
-
-    const distance = this.character.x - this.endboss.x;
-    const speed = 3;
-
-    if (Math.abs(distance) > 20) {
-      if (distance > 0) {
-        this.endboss.x += speed;
-        this.endboss.otherDirection = false;
-      } else {
-        this.endboss.x -= speed;
-        this.endboss.otherDirection = true;
-      }
-
-      if (!this.endboss.isPlayingCustomAnimation) {
-        this.endboss.playAnimation(this.endboss.IMAGES_WALK);
-      }
-    }
-  }
-
   checkEnemyCollisions() {
     this.level.enemies.forEach((enemy) => {
       if (!enemy.isDead && this.character.isColliding(enemy)) {
@@ -274,29 +252,29 @@ class World {
     objects.forEach((o) => this.addToMap(o));
   }
 
-  addToMap(mo) {
-    this.ctx.save();
-
-    if (mo.otherDirection) {
-      if (mo.constructor.name === "Endboss" || mo === this.endboss) {
-        this.ctx.translate(mo.x + mo.width / 2, 0);
-        this.ctx.scale(1, 1);
-        this.ctx.translate(-(mo.x + mo.width / 2), 0);
-      } else {
-        this.ctx.translate(mo.x + mo.width / 2, 0);
-        this.ctx.scale(-1, 1);
-        this.ctx.translate(-(mo.x + mo.width / 2), 0);
-      }
+addToMap(mo) {
+  this.ctx.save(); 
+  
+  if (mo.otherDirection) {
+    if (mo.constructor.name === 'Endboss' || mo === this.endboss) {
+      this.ctx.translate(mo.x + mo.width / 2, 0);
+      this.ctx.scale(1, 1); 
+      this.ctx.translate(-(mo.x + mo.width / 2), 0);
+    } else {
+      this.ctx.translate(mo.x + mo.width / 2, 0);
+      this.ctx.scale(-1, 1);
+      this.ctx.translate(-(mo.x + mo.width / 2), 0);
     }
-
-    mo.draw(this.ctx);
-
-    if (this.DEBUG_MODE) {
-      mo.drawFrame(this.ctx);
-    }
-
-    this.ctx.restore();
   }
+  
+  mo.draw(this.ctx);
+  
+  if (this.DEBUG_MODE) {
+    mo.drawFrame(this.ctx);
+  }
+  
+  this.ctx.restore();  
+}
 
   flipImage(mo) {
     this.ctx.save();

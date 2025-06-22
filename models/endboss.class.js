@@ -51,12 +51,22 @@ class Endboss extends MovableObject {
   isDead = false;
   isWalking = false;
   isAlerted = false;
+  isAttacking = false;
   animationInterval;
   movementAnimationId;
-
   hurtFrameIndex = 0;
   hurtAnimationPlaying = false;
   currentFrameIndex = 0;
+  isJumping = false;
+  jumpStartY = 0;
+  jumpStartX = 0;
+  jumpTargetX = 0;
+  jumpSpeed = 8;
+  jumpHeight = 150;
+  jumpProgress = 0;
+
+  victoryImage = null;
+  showVictoryScreen = false;
 
   constructor() {
     super();
@@ -67,8 +77,20 @@ class Endboss extends MovableObject {
     this.loadImages(this.IMAGES_HURT);
     this.loadImages(this.IMAGES_DEAD);
     this.x = 4000;
+    this.loadVictoryImage();
     this.animate();
     this.startMovement();
+  }
+
+  loadVictoryImage() {
+    this.victoryImage = new Image();
+    this.victoryImage.src = "img/You won, you lost/You won A.png";
+    this.victoryImage.onload = () => {
+      console.log("Victory Image erfolgreich geladen!");
+    };
+    this.victoryImage.onerror = () => {
+      console.error("Fehler beim Laden des Victory Images!");
+    };
   }
 
   animate() {
@@ -77,6 +99,8 @@ class Endboss extends MovableObject {
         this.playDeathAnimation();
       } else if (this.isHurt) {
         this.playHurtAnimation();
+      } else if (this.isAttacking) {
+        this.playAttackAnimation();
       } else if (this.isAlerted) {
         this.playAlertAnimation();
       } else if (this.isWalking) {
@@ -97,11 +121,37 @@ class Endboss extends MovableObject {
       if (window.character) {
         const distance = Math.abs(this.x - character.x);
 
-        if (distance < 400) {
-          this.isWalking = true;
+        if (!this.isJumping) {
+          if (character.x > this.x) {
+            this.otherDirection = true;
+          } else {
+            this.otherDirection = false;
+          }
+        }
+
+        if (distance < 100) {
+          if (!this.isAttacking && !this.isJumping) {
+            this.startJumpAttack();
+          }
+          this.isWalking = false;
+          this.isAttacking = true;
+          this.isAlerted = false;
+        } else if (distance < 400) {
+          if (!this.isHurt && !this.isAlerted && !this.isJumping) {
+            this.isWalking = true;
+            this.isAttacking = false;
+          }
           this.moveTowardsCharacter();
         } else {
           this.isWalking = false;
+          this.isAttacking = false;
+          if (!this.isHurt && !this.isJumping) {
+            this.isAlerted = true;
+          }
+        }
+
+        if (this.isJumping) {
+          this.updateJumpAttack();
         }
       }
 
@@ -113,16 +163,25 @@ class Endboss extends MovableObject {
   moveTowardsCharacter() {
     if (!window.character || this.isDead) return;
 
-    const distanceX = character.x - this.x;
+    if (!this.isWalking) return;
 
-    if (distanceX > 0) {
-      this.x += this.speed;
-      this.otherDirection = false;
-      console.log(`Endboss bewegt sich: x = ${this.x}, Richtung = rechts`);
-    } else if (distanceX < 0) {
-      this.x -= this.speed;
+    const distanceX = character.x - this.x;
+    const speed = 3;
+
+    if (character.x > this.x) {
       this.otherDirection = true;
-      console.log(`Endboss bewegt sich: x = ${this.x}, Richtung = links`);
+    } else {
+      this.otherDirection = false;
+    }
+
+    if (Math.abs(distanceX) > 20) {
+      if (distanceX > 0) {
+        this.x += speed;
+        console.log(`Endboss bewegt sich: x = ${this.x}, Richtung = rechts`);
+      } else {
+        this.x -= speed;
+        console.log(`Endboss bewegt sich: x = ${this.x}, Richtung = links`);
+      }
     }
   }
 
@@ -156,13 +215,118 @@ class Endboss extends MovableObject {
     }
   }
 
+  startJumpAttack() {
+    if (this.isJumping || !window.character) return;
+
+    this.isJumping = true;
+    this.jumpStartY = this.y;
+    this.jumpStartX = this.x;
+    this.jumpTargetX = character.x;
+    this.jumpProgress = 0;
+
+    if (character.x > this.x) {
+      this.otherDirection = true;
+    } else {
+      this.otherDirection = false;
+    }
+
+    console.log("Endboss startet Sprung-Angriff!");
+  }
+
+  updateJumpAttack() {
+    if (!this.isJumping) return;
+
+    this.jumpProgress += 0.05;
+
+    if (this.jumpProgress >= 1) {
+      this.isJumping = false;
+      this.y = this.jumpStartY;
+      this.jumpProgress = 0;
+
+      setTimeout(() => {
+        this.isAttacking = false;
+      }, 500);
+
+      console.log("Endboss Sprung-Angriff beendet!");
+      return;
+    }
+
+    const progress = this.jumpProgress;
+    const targetDistance = this.jumpTargetX - this.jumpStartX;
+    this.x = this.jumpStartX + targetDistance * progress;
+
+    const jumpHeight = this.jumpHeight;
+    const verticalOffset = jumpHeight * Math.sin(progress * Math.PI);
+    this.y = this.jumpStartY - verticalOffset;
+  }
+
+  playAttackAnimation() {
+    this.playAnimation(this.IMAGES_ATTACK);
+  }
+
   playDeathAnimation() {
     this.playAnimation(this.IMAGES_DEAD);
     setTimeout(() => {
       clearInterval(this.animationInterval);
       cancelAnimationFrame(this.movementAnimationId);
       this.shouldBeRemoved = true;
+      this.showVictoryScreen = true;
+      this.displayVictoryScreen();
     }, this.IMAGES_DEAD.length * 200);
+  }
+
+  displayVictoryScreen() {
+    let ctx = this.findCanvasContext();
+
+    if (!this.victoryImage || !ctx) {
+      console.error("Victory Image oder Canvas Context nicht verfügbar!");
+      console.error("ctx:", ctx);
+      console.error("this.victoryImage:", this.victoryImage);
+      return;
+    }
+
+    console.log("Canvas Context gefunden!", ctx);
+
+    // Canvas-Dimensionen ermitteln
+    const canvas = ctx.canvas;
+    const canvasWidth = canvas.width;
+    const canvasHeight = canvas.height;
+
+    // Victory Image mittig auf dem Canvas positionieren
+    const imgWidth = this.victoryImage.width;
+    const imgHeight = this.victoryImage.height;
+
+    // Skalierung berechnen (falls das Bild zu groß ist)
+    const maxWidth = canvasWidth * 0.8; // 80% der Canvas-Breite
+    const maxHeight = canvasHeight * 0.8; // 80% der Canvas-Höhe
+    let scale = Math.min(maxWidth / imgWidth, maxHeight / imgHeight, 1);
+
+    const finalWidth = imgWidth * scale;
+    const finalHeight = imgHeight * scale;
+
+    const x = (canvasWidth - finalWidth) / 2;
+    const y = (canvasHeight - finalHeight) / 2;
+
+    // Victory Screen zeichnen
+    const drawVictoryScreen = () => {
+      // Halbtransparenter Hintergrund
+      ctx.fillStyle = "rgba(0, 0, 0, 0.7)";
+      ctx.fillRect(0, 0, canvasWidth, canvasHeight);
+
+      // Victory Image zeichnen
+      ctx.drawImage(this.victoryImage, x, y, finalWidth, finalHeight);
+    };
+
+    // Victory Screen kontinuierlich zeichnen
+    const victoryLoop = () => {
+      if (this.showVictoryScreen) {
+        drawVictoryScreen();
+        requestAnimationFrame(victoryLoop);
+      }
+    };
+
+    console.log("Victory Screen wird angezeigt!");
+    victoryLoop();
   }
 
   takeDamage() {
@@ -187,6 +351,40 @@ class Endboss extends MovableObject {
 
     this.loadImage(images[this.currentFrameIndex]);
     this.currentFrameIndex++;
+  }
+
+  findCanvasContext() {
+    let ctx = null;
+
+    if (typeof world !== "undefined" && world.ctx) {
+      ctx = world.ctx;
+      console.log("Context gefunden über: world.ctx");
+    }
+    else if (window.canvas && window.canvas.getContext) {
+      ctx = window.canvas.getContext("2d");
+      console.log("Context gefunden über: window.canvas");
+    }
+    else if (document.querySelector("canvas")) {
+      ctx = document.querySelector("canvas").getContext("2d");
+      console.log("Context gefunden über: document.querySelector('canvas')");
+    }
+    else if (window.ctx) {
+      ctx = window.ctx;
+      console.log("Context gefunden über: window.ctx");
+    }
+
+    if (!ctx) {
+      console.error("Kein Canvas Context gefunden!");
+      console.log("Verfügbare globale Variablen:");
+      console.log(
+        "- world.ctx:",
+        typeof world !== "undefined" && world.ctx ? world.ctx : "undefined"
+      );
+      console.log("- window.canvas:", window.canvas);
+      console.log("- Canvas im DOM:", document.querySelector("canvas"));
+    }
+
+    return ctx;
   }
 
   getHitbox() {
