@@ -8,11 +8,13 @@ class World {
   statusBar = new StatusBar("health", 10, 0);
   bottleBar = new StatusBar("bottle", 10, 60);
   coinBar = new StatusBar("coin", 10, 120);
+  endbossStatusBar; 
   throwableObjects = [];
   lastBottleThrow = 0;
   DEBUG_MODE = false;
   endboss;
   endbossActivated = false;
+  endbossHitCount = 0;
   currentState = "alert";
   endbossMovementInterval;
 
@@ -26,6 +28,9 @@ class World {
     this.character.world = this;
     this.bottleBar.setPercentage(0);
     this.endboss = this.level.endboss;
+    
+    this.createEndbossStatusBar();
+    
     this.setWorld();
     this.run();
     this.draw();
@@ -47,6 +52,18 @@ class World {
       this.checkProjectileCollisions();
       this.removeDeadEnemies();
     }, 100);
+  }
+
+  createEndbossStatusBar() {
+    const x = this.canvas.width - 220; 
+    const y = 10; 
+  
+    console.log(`Erstelle Endboss-Statusleiste an Position: x=${x}, y=${y}`);
+    
+    this.endbossStatusBar = new StatusBar("endboss", x, y);
+    this.endbossStatusBar.setPercentage(100); 
+    
+    console.log("Endboss-Statusleiste erstellt:", this.endbossStatusBar);
   }
 
   draw() {
@@ -85,6 +102,11 @@ class World {
     this.statusBar.draw(this.ctx);
     this.bottleBar.draw(this.ctx);
     this.coinBar.draw(this.ctx);
+
+    if (this.endbossStatusBar) {
+      console.log("Zeichne Endboss-Statusleiste an Position:", this.endbossStatusBar.x, this.endbossStatusBar.y);
+      this.endbossStatusBar.draw(this.ctx);
+    }
 
     requestAnimationFrame(() => this.draw());
   }
@@ -201,8 +223,16 @@ class World {
         if (bottle.isColliding(this.endboss)) {
           bottle.splash("endboss");
           this.endboss.takeDamage();
+          this.endbossHitCount++;
+          
           if (this.DEBUG_MODE) {
-            console.log("Endboss getroffen! Energie:", this.endboss.health);
+            console.log("Endboss getroffen! Energie:", this.endboss.health, "Treffer:", this.endbossHitCount);
+          }
+
+          // Endboss-Statusleiste aktualisieren (alle 2 Treffer)
+          if (this.endbossStatusBar && this.endbossHitCount % 2 === 0) {
+            console.log(`Aktualisiere Endboss-Statusleiste: Health=${this.endboss.health}, Treffer=${this.endbossHitCount}`);
+            this.endbossStatusBar.setPercentage(this.endboss.health);
           }
 
           if (!this.endboss.isPlayingCustomAnimation) {
@@ -252,29 +282,29 @@ class World {
     objects.forEach((o) => this.addToMap(o));
   }
 
-addToMap(mo) {
-  this.ctx.save(); 
-  
-  if (mo.otherDirection) {
-    if (mo.constructor.name === 'Endboss' || mo === this.endboss) {
-      this.ctx.translate(mo.x + mo.width / 2, 0);
-      this.ctx.scale(1, 1); 
-      this.ctx.translate(-(mo.x + mo.width / 2), 0);
-    } else {
-      this.ctx.translate(mo.x + mo.width / 2, 0);
-      this.ctx.scale(-1, 1);
-      this.ctx.translate(-(mo.x + mo.width / 2), 0);
+  addToMap(mo) {
+    this.ctx.save();
+
+    if (mo.otherDirection) {
+      if (mo.constructor.name === "Endboss" || mo === this.endboss) {
+        this.ctx.translate(mo.x + mo.width / 2, 0);
+        this.ctx.scale(1, 1);
+        this.ctx.translate(-(mo.x + mo.width / 2), 0);
+      } else {
+        this.ctx.translate(mo.x + mo.width / 2, 0);
+        this.ctx.scale(-1, 1);
+        this.ctx.translate(-(mo.x + mo.width / 2), 0);
+      }
     }
+
+    mo.draw(this.ctx);
+
+    if (this.DEBUG_MODE) {
+      mo.drawFrame(this.ctx);
+    }
+
+    this.ctx.restore();
   }
-  
-  mo.draw(this.ctx);
-  
-  if (this.DEBUG_MODE) {
-    mo.drawFrame(this.ctx);
-  }
-  
-  this.ctx.restore();  
-}
 
   flipImage(mo) {
     this.ctx.save();
@@ -286,5 +316,39 @@ addToMap(mo) {
 
   flipImageBack() {
     this.ctx.restore();
+  }
+
+  clearAllIntervals() {
+    if (this.drawInterval) {
+      clearInterval(this.drawInterval);
+    }
+    if (this.checkCollisionsInterval) {
+      clearInterval(this.checkCollisionsInterval);
+    }
+    if (this.runInterval) {
+      clearInterval(this.runInterval);
+    }
+
+    if (this.character) {
+      this.character.clearAllIntervals();
+    }
+
+    if (this.enemies) {
+      this.enemies.forEach((enemy) => {
+        if (enemy.clearAllIntervals) {
+          enemy.clearAllIntervals();
+        }
+      });
+    }
+
+    if (this.bottles) {
+      this.bottles.forEach((bottle) => {
+        if (bottle.clearAllIntervals) {
+          bottle.clearAllIntervals();
+        }
+      });
+    }
+
+    console.log("Alle Intervalle wurden gestoppt");
   }
 }

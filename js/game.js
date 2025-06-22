@@ -7,6 +7,28 @@ function init() {
   world = new World(canvas, keyboard);
 }
 
+// Funktion zum Zurücksetzen aller Spielvariablen
+function resetGame() {
+  // Alle Intervalle und Animationen stoppen
+  if (world && world.clearAllIntervals) {
+    world.clearAllIntervals();
+  }
+  
+  // Globale Variablen zurücksetzen
+  world = null;
+  
+  // Canvas leeren
+  if (canvas) {
+    let ctx = canvas.getContext("2d");
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
+  }
+  
+  // Keyboard zurücksetzen
+  keyboard = new Keyboard();
+  
+  console.log("Spiel wurde vollständig zurückgesetzt");
+}
+
 window.addEventListener("keydown", (e) => {
   if (e.keyCode == 39) keyboard.RIGHT = true;
   if (e.keyCode == 37) keyboard.LEFT = true;
@@ -66,18 +88,28 @@ function toggleFullscreen(element) {
 }
 
 function showStartScreen() {
+  if (world) {
+    resetGame();
+  }
+  
   let canvas = document.getElementById("canvas");
   let ctx = canvas.getContext("2d");
   let startImage = new Image();
   startImage.src = "../img/9_intro_outro_screens/start/startscreen_1.png";
 
   startImage.onload = () => {
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
     ctx.drawImage(startImage, 0, 0, canvas.width, canvas.height);
   };
+  
+  console.log("Startbildschirm wird angezeigt");
 }
 
 function startGame() {
+  console.log("Spiel wird gestartet...");
+  
   document.getElementById("startButton").style.display = "none";
   document.getElementById("controlsImage").style.display = "block";
+  
   init(); 
 }

@@ -287,37 +287,28 @@ class Endboss extends MovableObject {
 
     console.log("Canvas Context gefunden!", ctx);
 
-    // Canvas-Dimensionen ermitteln
     const canvas = ctx.canvas;
     const canvasWidth = canvas.width;
     const canvasHeight = canvas.height;
 
-    // Victory Image mittig auf dem Canvas positionieren
     const imgWidth = this.victoryImage.width;
     const imgHeight = this.victoryImage.height;
 
-    // Skalierung berechnen (falls das Bild zu groß ist)
-    const maxWidth = canvasWidth * 0.8; // 80% der Canvas-Breite
-    const maxHeight = canvasHeight * 0.8; // 80% der Canvas-Höhe
+    const maxWidth = canvasWidth * 0.8;
+    const maxHeight = canvasHeight * 0.8;
     let scale = Math.min(maxWidth / imgWidth, maxHeight / imgHeight, 1);
-
     const finalWidth = imgWidth * scale;
     const finalHeight = imgHeight * scale;
-
     const x = (canvasWidth - finalWidth) / 2;
     const y = (canvasHeight - finalHeight) / 2;
 
-    // Victory Screen zeichnen
     const drawVictoryScreen = () => {
-      // Halbtransparenter Hintergrund
       ctx.fillStyle = "rgba(0, 0, 0, 0.7)";
       ctx.fillRect(0, 0, canvasWidth, canvasHeight);
 
-      // Victory Image zeichnen
       ctx.drawImage(this.victoryImage, x, y, finalWidth, finalHeight);
     };
 
-    // Victory Screen kontinuierlich zeichnen
     const victoryLoop = () => {
       if (this.showVictoryScreen) {
         drawVictoryScreen();
@@ -327,8 +318,72 @@ class Endboss extends MovableObject {
 
     console.log("Victory Screen wird angezeigt!");
     victoryLoop();
+
+    setTimeout(() => {
+      this.showVictoryScreen = false;
+      this.reloadPage();
+    }, 2000);
   }
 
+  // Seite neu laden - einfachste und zuverlässigste Lösung
+  reloadPage() {
+    console.log("Seite wird neu geladen...");
+    window.location.reload();
+  }
+  // Methode um zum ursprünglichen Startbildschirm zurückzukehren
+  returnToStartScreen() {
+    console.log("Zurück zum Startbildschirm...");
+
+    // Alle laufenden Animationen und Intervalle stoppen
+    if (this.animationInterval) {
+      clearInterval(this.animationInterval);
+    }
+    if (this.movementAnimationId) {
+      cancelAnimationFrame(this.movementAnimationId);
+    }
+
+    // World-Objekt zurücksetzen
+    if (typeof world !== "undefined" && world) {
+      if (world.clearAllIntervals) {
+        world.clearAllIntervals();
+      }
+      // World-Variable zurücksetzen
+      world = null;
+    }
+
+    // Canvas leeren
+    let ctx = this.findCanvasContext();
+    if (ctx) {
+      const canvas = ctx.canvas;
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
+    }
+
+    // Zurück zum ursprünglichen Startbildschirm
+    this.resetToOriginalStartScreen();
+  }
+
+  // Zurück zum ursprünglichen HTML-Startbildschirm
+  resetToOriginalStartScreen() {
+    // Start-Button wieder sichtbar machen
+    const startButton = document.getElementById("startButton");
+    const controlsImage = document.getElementById("controlsImage");
+
+    if (startButton) {
+      startButton.style.display = "block";
+    }
+    if (controlsImage) {
+      controlsImage.style.display = "none";
+    }
+
+    // Originalfunktion aus game.js aufrufen
+    if (typeof showStartScreen === "function") {
+      showStartScreen();
+    }
+
+    console.log(
+      "Startbildschirm wiederhergestellt - Spieler kann neues Spiel starten"
+    );
+  }
   takeDamage() {
     if (this.isDead) return;
     this.health -= 10;
@@ -359,16 +414,13 @@ class Endboss extends MovableObject {
     if (typeof world !== "undefined" && world.ctx) {
       ctx = world.ctx;
       console.log("Context gefunden über: world.ctx");
-    }
-    else if (window.canvas && window.canvas.getContext) {
+    } else if (window.canvas && window.canvas.getContext) {
       ctx = window.canvas.getContext("2d");
       console.log("Context gefunden über: window.canvas");
-    }
-    else if (document.querySelector("canvas")) {
+    } else if (document.querySelector("canvas")) {
       ctx = document.querySelector("canvas").getContext("2d");
       console.log("Context gefunden über: document.querySelector('canvas')");
-    }
-    else if (window.ctx) {
+    } else if (window.ctx) {
       ctx = window.ctx;
       console.log("Context gefunden über: window.ctx");
     }
@@ -393,6 +445,52 @@ class Endboss extends MovableObject {
       y: this.y + 120,
       width: this.width - 80,
       height: this.height - 150,
+    };
+  }
+
+  restartGame() {
+    console.log("Spiel wird neu gestartet...");
+
+    // Alle laufenden Animationen und Intervalle stoppen
+    if (this.animationInterval) {
+      clearInterval(this.animationInterval);
+    }
+    if (this.movementAnimationId) {
+      cancelAnimationFrame(this.movementAnimationId);
+    }
+
+    // World-Objekt zurücksetzen/neu erstellen
+    if (typeof world !== "undefined" && world) {
+      world.clearAllIntervals();
+    }
+
+    // Start-Bildschirm anzeigen
+    this.showStartScreen();
+
+    // Start-Button wieder einblenden
+    const startButton = document.getElementById("startButton");
+    const controlsImage = document.getElementById("controlsImage");
+
+    if (startButton) {
+      startButton.style.display = "block";
+    }
+    if (controlsImage) {
+      controlsImage.style.display = "none";
+    }
+  }
+
+  // Hilfsmethode zum Anzeigen des Start-Bildschirms
+  showStartScreen() {
+    let ctx = this.findCanvasContext();
+    if (!ctx) return;
+
+    let startImage = new Image();
+    startImage.src = "img/9_intro_outro_screens/start/startscreen_1.png";
+
+    startImage.onload = () => {
+      const canvas = ctx.canvas;
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
+      ctx.drawImage(startImage, 0, 0, canvas.width, canvas.height);
     };
   }
 }
