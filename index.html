@@ -27,27 +27,28 @@
   </head>
 
   <body onload="showStartScreen()">
-    <img class="title" src="../img/title.PNG" alt="El Pollo Loco" />
-
-    <div class="canvas-container">
+    <div class="game-container">
+      <img class="title" src="../img/title.PNG" alt="El Pollo Loco" />
       <canvas id="canvas" width="720" height="480"></canvas>
-
-      <div class="mobile-controls">
-        <button class="touch-btn" id="leftBtn">⬅️</button>
-        <button class="touch-btn" id="rightBtn">➡️</button>
-        <button class="touch-btn" id="jumpBtn">🕴</button>
-        <button class="touch-btn" id="throwBtn">🍾</button>
-        <button class="fullscreen-btn" onclick="toggleFullscreen()">⛶</button>
-      </div>
+      <button id="startButton" onclick="startGame()">Starte Spiel</button>
+      <img
+        id="controlsImage"
+        class="controls"
+        src="../img/controls.png"
+        alt="controls"
+        style="display: none"
+      />
     </div>
 
-    <button id="startButton" onclick="startGame()">Starte Spiel</button>
-    <img
-      id="controlsImage"
-      class="controls"
-      src="../img/controls.png"
-      alt="controls"
-      style="display: none"
-    />
+    <div class="mobile-controls">
+      <div class="left-right-container">
+        <div id="leftBtn" class="touch-btn">←</div>
+        <div id="rightBtn" class="touch-btn">→</div>
+      </div>
+      <div class="right-buttons">
+        <div id="jumpBtn" class="touch-btn">↑</div>
+        <div id="throwBtn" class="touch-btn">✸</div>
+      </div>
+    </div>
   </body>
 </html>
