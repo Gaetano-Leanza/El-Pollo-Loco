@@ -46,7 +46,6 @@ class Endboss extends MovableObject {
     "img/4_enemie_boss_chicken/5_dead/G26.png",
   ];
 
-  health = 100;
   isHurt = false;
   isDead = false;
   isWalking = false;
@@ -64,9 +63,13 @@ class Endboss extends MovableObject {
   jumpSpeed = 8;
   jumpHeight = 150;
   jumpProgress = 0;
-
   victoryImage = null;
   showVictoryScreen = false;
+  health = 100;
+  hitCounter = 0;
+  lastHitTime = 0;
+  hitCooldown = 500;
+  maxHits = 5;
 
   constructor() {
     super();
@@ -80,6 +83,9 @@ class Endboss extends MovableObject {
     this.loadVictoryImage();
     this.animate();
     this.startMovement();
+    setTimeout(() => {
+      if (world) this.worldReference = world;
+    }, 100);
   }
 
   loadVictoryImage() {
@@ -122,11 +128,7 @@ class Endboss extends MovableObject {
         const distance = Math.abs(this.x - character.x);
 
         if (!this.isJumping) {
-          if (character.x > this.x) {
-            this.otherDirection = true;
-          } else {
-            this.otherDirection = false;
-          }
+          this.otherDirection = character.x > this.x;
         }
 
         if (distance < 100) {
@@ -161,27 +163,15 @@ class Endboss extends MovableObject {
   }
 
   moveTowardsCharacter() {
-    if (!window.character || this.isDead) return;
-
-    if (!this.isWalking) return;
+    if (!window.character || this.isDead || !this.isWalking) return;
 
     const distanceX = character.x - this.x;
     const speed = 3;
 
-    if (character.x > this.x) {
-      this.otherDirection = true;
-    } else {
-      this.otherDirection = false;
-    }
+    this.otherDirection = character.x > this.x;
 
     if (Math.abs(distanceX) > 20) {
-      if (distanceX > 0) {
-        this.x += speed;
-        console.log(`Endboss bewegt sich: x = ${this.x}, Richtung = rechts`);
-      } else {
-        this.x -= speed;
-        console.log(`Endboss bewegt sich: x = ${this.x}, Richtung = links`);
-      }
+      this.x += distanceX > 0 ? speed : -speed;
     }
   }
 
@@ -207,7 +197,6 @@ class Endboss extends MovableObject {
       this.isHurt = false;
       this.hurtAnimationPlaying = false;
       this.isAlerted = true;
-
       setTimeout(() => {
         this.isAlerted = false;
         this.isWalking = true;
@@ -224,11 +213,7 @@ class Endboss extends MovableObject {
     this.jumpTargetX = character.x;
     this.jumpProgress = 0;
 
-    if (character.x > this.x) {
-      this.otherDirection = true;
-    } else {
-      this.otherDirection = false;
-    }
+    this.otherDirection = character.x > this.x;
 
     console.log("Endboss startet Sprung-Angriff!");
   }
@@ -255,8 +240,7 @@ class Endboss extends MovableObject {
     const targetDistance = this.jumpTargetX - this.jumpStartX;
     this.x = this.jumpStartX + targetDistance * progress;
 
-    const jumpHeight = this.jumpHeight;
-    const verticalOffset = jumpHeight * Math.sin(progress * Math.PI);
+    const verticalOffset = this.jumpHeight * Math.sin(progress * Math.PI);
     this.y = this.jumpStartY - verticalOffset;
   }
 
@@ -277,35 +261,21 @@ class Endboss extends MovableObject {
 
   displayVictoryScreen() {
     let ctx = this.findCanvasContext();
-
-    if (!this.victoryImage || !ctx) {
-      console.error("Victory Image oder Canvas Context nicht verfügbar!");
-      console.error("ctx:", ctx);
-      console.error("this.victoryImage:", this.victoryImage);
-      return;
-    }
-
-    console.log("Canvas Context gefunden!", ctx);
+    if (!this.victoryImage || !ctx) return;
 
     const canvas = ctx.canvas;
-    const canvasWidth = canvas.width;
-    const canvasHeight = canvas.height;
+    const maxWidth = canvas.width * 0.8;
+    const maxHeight = canvas.height * 0.8;
+    let scale = Math.min(maxWidth / this.victoryImage.width, maxHeight / this.victoryImage.height, 1);
 
-    const imgWidth = this.victoryImage.width;
-    const imgHeight = this.victoryImage.height;
-
-    const maxWidth = canvasWidth * 0.8;
-    const maxHeight = canvasHeight * 0.8;
-    let scale = Math.min(maxWidth / imgWidth, maxHeight / imgHeight, 1);
-    const finalWidth = imgWidth * scale;
-    const finalHeight = imgHeight * scale;
-    const x = (canvasWidth - finalWidth) / 2;
-    const y = (canvasHeight - finalHeight) / 2;
+    const finalWidth = this.victoryImage.width * scale;
+    const finalHeight = this.victoryImage.height * scale;
+    const x = (canvas.width - finalWidth) / 2;
+    const y = (canvas.height - finalHeight) / 2;
 
     const drawVictoryScreen = () => {
       ctx.fillStyle = "rgba(0, 0, 0, 0.7)";
-      ctx.fillRect(0, 0, canvasWidth, canvasHeight);
-
+      ctx.fillRect(0, 0, canvas.width, canvas.height);
       ctx.drawImage(this.victoryImage, x, y, finalWidth, finalHeight);
     };
 
@@ -316,7 +286,6 @@ class Endboss extends MovableObject {
       }
     };
 
-    console.log("Victory Screen wird angezeigt!");
     victoryLoop();
 
     setTimeout(() => {
@@ -325,70 +294,50 @@ class Endboss extends MovableObject {
     }, 2000);
   }
 
-  // Seite neu laden - einfachste und zuverlässigste Lösung
   reloadPage() {
-    console.log("Seite wird neu geladen...");
     window.location.reload();
   }
-  // Methode um zum ursprünglichen Startbildschirm zurückzukehren
+
   returnToStartScreen() {
-    console.log("Zurück zum Startbildschirm...");
+    if (this.animationInterval) clearInterval(this.animationInterval);
+    if (this.movementAnimationId) cancelAnimationFrame(this.movementAnimationId);
 
-    // Alle laufenden Animationen und Intervalle stoppen
-    if (this.animationInterval) {
-      clearInterval(this.animationInterval);
-    }
-    if (this.movementAnimationId) {
-      cancelAnimationFrame(this.movementAnimationId);
-    }
-
-    // World-Objekt zurücksetzen
-    if (typeof world !== "undefined" && world) {
-      if (world.clearAllIntervals) {
-        world.clearAllIntervals();
-      }
-      // World-Variable zurücksetzen
+    if (typeof world !== "undefined" && world?.clearAllIntervals) {
+      world.clearAllIntervals();
       world = null;
     }
 
-    // Canvas leeren
-    let ctx = this.findCanvasContext();
-    if (ctx) {
-      const canvas = ctx.canvas;
-      ctx.clearRect(0, 0, canvas.width, canvas.height);
-    }
+    const ctx = this.findCanvasContext();
+    if (ctx) ctx.clearRect(0, 0, ctx.canvas.width, ctx.canvas.height);
 
-    // Zurück zum ursprünglichen Startbildschirm
     this.resetToOriginalStartScreen();
   }
 
-  // Zurück zum ursprünglichen HTML-Startbildschirm
   resetToOriginalStartScreen() {
-    // Start-Button wieder sichtbar machen
     const startButton = document.getElementById("startButton");
     const controlsImage = document.getElementById("controlsImage");
 
-    if (startButton) {
-      startButton.style.display = "block";
-    }
-    if (controlsImage) {
-      controlsImage.style.display = "none";
-    }
+    if (startButton) startButton.style.display = "block";
+    if (controlsImage) controlsImage.style.display = "none";
 
-    // Originalfunktion aus game.js aufrufen
-    if (typeof showStartScreen === "function") {
-      showStartScreen();
-    }
-
-    console.log(
-      "Startbildschirm wiederhergestellt - Spieler kann neues Spiel starten"
-    );
+    if (typeof showStartScreen === "function") showStartScreen();
   }
+
   takeDamage() {
     if (this.isDead) return;
-    this.health -= 10;
 
-    if (this.health <= 0) {
+    const currentTime = Date.now();
+    if (currentTime - this.lastHitTime < this.hitCooldown) return;
+
+    this.lastHitTime = currentTime;
+    this.hitCounter++;
+    this.health = Math.max(0, 100 - this.hitCounter * 20);
+
+    if (this.worldReference?.registerEndbossHit) {
+      this.worldReference.registerEndbossHit(this.health, this.hitCounter);
+    }
+
+    if (this.hitCounter >= this.maxHits) {
       this.health = 0;
       this.isDead = true;
       this.playDeathAnimation();
@@ -409,34 +358,13 @@ class Endboss extends MovableObject {
   }
 
   findCanvasContext() {
-    let ctx = null;
+    if (typeof world !== "undefined" && world?.ctx) return world.ctx;
+    if (window.canvas?.getContext) return window.canvas.getContext("2d");
+    if (document.querySelector("canvas")) return document.querySelector("canvas").getContext("2d");
+    if (window.ctx) return window.ctx;
 
-    if (typeof world !== "undefined" && world.ctx) {
-      ctx = world.ctx;
-      console.log("Context gefunden über: world.ctx");
-    } else if (window.canvas && window.canvas.getContext) {
-      ctx = window.canvas.getContext("2d");
-      console.log("Context gefunden über: window.canvas");
-    } else if (document.querySelector("canvas")) {
-      ctx = document.querySelector("canvas").getContext("2d");
-      console.log("Context gefunden über: document.querySelector('canvas')");
-    } else if (window.ctx) {
-      ctx = window.ctx;
-      console.log("Context gefunden über: window.ctx");
-    }
-
-    if (!ctx) {
-      console.error("Kein Canvas Context gefunden!");
-      console.log("Verfügbare globale Variablen:");
-      console.log(
-        "- world.ctx:",
-        typeof world !== "undefined" && world.ctx ? world.ctx : "undefined"
-      );
-      console.log("- window.canvas:", window.canvas);
-      console.log("- Canvas im DOM:", document.querySelector("canvas"));
-    }
-
-    return ctx;
+    console.error("Kein Canvas Context gefunden!");
+    return null;
   }
 
   getHitbox() {
@@ -449,37 +377,20 @@ class Endboss extends MovableObject {
   }
 
   restartGame() {
-    console.log("Spiel wird neu gestartet...");
+    if (this.animationInterval) clearInterval(this.animationInterval);
+    if (this.movementAnimationId) cancelAnimationFrame(this.movementAnimationId);
 
-    // Alle laufenden Animationen und Intervalle stoppen
-    if (this.animationInterval) {
-      clearInterval(this.animationInterval);
-    }
-    if (this.movementAnimationId) {
-      cancelAnimationFrame(this.movementAnimationId);
-    }
+    if (typeof world !== "undefined" && world) world.clearAllIntervals();
 
-    // World-Objekt zurücksetzen/neu erstellen
-    if (typeof world !== "undefined" && world) {
-      world.clearAllIntervals();
-    }
-
-    // Start-Bildschirm anzeigen
     this.showStartScreen();
 
-    // Start-Button wieder einblenden
     const startButton = document.getElementById("startButton");
     const controlsImage = document.getElementById("controlsImage");
 
-    if (startButton) {
-      startButton.style.display = "block";
-    }
-    if (controlsImage) {
-      controlsImage.style.display = "none";
-    }
+    if (startButton) startButton.style.display = "block";
+    if (controlsImage) controlsImage.style.display = "none";
   }
 
-  // Hilfsmethode zum Anzeigen des Start-Bildschirms
   showStartScreen() {
     let ctx = this.findCanvasContext();
     if (!ctx) return;

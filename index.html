@@ -1,10 +1,11 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="de">
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <link rel="stylesheet" href="style.css" />
     <title>El Pollo Loco</title>
+    <link rel="stylesheet" href="style.css" />
+
     <script src="models/drawable-object.class.js"></script>
     <script src="models/movable-object.class.js"></script>
     <script src="models/throwable-object.class.js"></script>
@@ -22,20 +23,31 @@
     <script src="models/bottle.class.js"></script>
     <script src="levels/level1.js"></script>
     <script src="models/world.class.js"></script>
-    <script src="js/game.js"></script>
+    <script src="js/game.js" defer></script>
   </head>
+
   <body onload="showStartScreen()">
-  <br />
-  <br />
-  <br />
-  <br />
-  <br />
-  <img class="title" src="../img/title.PNG" alt="El Pollo Loco" />
-  <canvas id="canvas" width="720" height="480"></canvas>
+    <img class="title" src="../img/title.PNG" alt="El Pollo Loco" />
 
-  <button id="startButton" onclick="startGame()">Starte Spiel</button>
+    <div class="canvas-container">
+      <canvas id="canvas" width="720" height="480"></canvas>
 
-  <img id="controlsImage" class="controls" src="../img/controls.png" alt="controls" style="display: none;" />
-</body>
+      <div class="mobile-controls">
+        <button class="touch-btn" id="leftBtn">⬅️</button>
+        <button class="touch-btn" id="rightBtn">➡️</button>
+        <button class="touch-btn" id="jumpBtn">🕴</button>
+        <button class="touch-btn" id="throwBtn">🍾</button>
+        <button class="fullscreen-btn" onclick="toggleFullscreen()">⛶</button>
+      </div>
+    </div>
 
+    <button id="startButton" onclick="startGame()">Starte Spiel</button>
+    <img
+      id="controlsImage"
+      class="controls"
+      src="../img/controls.png"
+      alt="controls"
+      style="display: none"
+    />
+  </body>
 </html>

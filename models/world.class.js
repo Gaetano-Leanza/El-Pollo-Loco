@@ -8,7 +8,7 @@ class World {
   statusBar = new StatusBar("health", 10, 0);
   bottleBar = new StatusBar("bottle", 10, 60);
   coinBar = new StatusBar("coin", 10, 120);
-  endbossStatusBar; 
+  endbossStatusBar;
   throwableObjects = [];
   lastBottleThrow = 0;
   DEBUG_MODE = false;
@@ -28,12 +28,14 @@ class World {
     this.character.world = this;
     this.bottleBar.setPercentage(0);
     this.endboss = this.level.endboss;
-    
     this.createEndbossStatusBar();
-    
     this.setWorld();
     this.run();
     this.draw();
+
+    if (this.endboss) {
+      this.endboss.worldReference = this;
+    }
   }
 
   setWorld() {
@@ -55,15 +57,17 @@ class World {
   }
 
   createEndbossStatusBar() {
-    const x = this.canvas.width - 220; 
-    const y = 10; 
-  
-    console.log(`Erstelle Endboss-Statusleiste an Position: x=${x}, y=${y}`);
-    
+    const x = this.canvas.width - 220;
+    const y = 10;
     this.endbossStatusBar = new StatusBar("endboss", x, y);
-    this.endbossStatusBar.setPercentage(100); 
-    
-    console.log("Endboss-Statusleiste erstellt:", this.endbossStatusBar);
+    this.endbossStatusBar.setPercentage(100);
+  }
+
+  registerEndbossHit(health, hitCounter) {
+    if (this.endbossStatusBar) {
+      this.endbossStatusBar.setPercentage(health);
+    }
+    this.endbossHitCount = hitCounter;
   }
 
   draw() {
@@ -71,7 +75,6 @@ class World {
 
     if (this.endboss && this.character.x > 3000 && !this.endbossActivated) {
       this.endbossActivated = true;
-      this.startEndbossBattle();
     }
 
     this.camera_x = this.endbossActivated
@@ -104,42 +107,10 @@ class World {
     this.coinBar.draw(this.ctx);
 
     if (this.endbossStatusBar) {
-      console.log("Zeichne Endboss-Statusleiste an Position:", this.endbossStatusBar.x, this.endbossStatusBar.y);
       this.endbossStatusBar.draw(this.ctx);
     }
 
     requestAnimationFrame(() => this.draw());
-  }
-
-  startEndbossBattle() {
-    this.currentState = "alert";
-
-    this.endbossMovementInterval = setInterval(() => {
-      if (this.endboss && !this.endboss.isDead()) {
-        this.moveEndbossTowardCharacter();
-      } else {
-        clearInterval(this.endbossMovementInterval);
-      }
-    }, 1000 / 60);
-
-    this.cycleEndbossAnimation();
-  }
-
-  cycleEndbossAnimation() {
-    if (!this.endboss || this.endboss.isDead()) return;
-
-    if (this.currentState === "alert") {
-      this.endboss.playCustomAnimation(this.endboss.IMAGES_ALERT, 150, () => {
-        this.currentState = "walking";
-        this.cycleEndbossAnimation();
-      });
-    } else if (this.currentState === "walking") {
-    } else if (this.currentState === "hurt") {
-      this.endboss.playCustomAnimation(this.endboss.IMAGES_HURT, 100, () => {
-        this.currentState = "alert";
-        this.cycleEndbossAnimation();
-      });
-    }
   }
 
   checkEnemyCollisions() {
@@ -160,8 +131,7 @@ class World {
     const maxTolerance = 30;
     const isAbove = charBox.y < enemyBox.y;
     const isFalling = fallingSpeed < 0;
-    const isSmallOverlap =
-      verticalDistance < maxTolerance && verticalDistance > 0;
+    const isSmallOverlap = verticalDistance < maxTolerance && verticalDistance > 0;
 
     if (isAbove && isFalling && isSmallOverlap) {
       enemy.takeDamage();
@@ -179,7 +149,7 @@ class World {
     this.level.enemies = this.level.enemies.filter(
       (enemy) => !enemy.shouldBeRemoved
     );
-    if (this.endboss && this.endboss.isDead()) {
+    if (this.endboss && this.endboss.isDead) {
       this.endboss = null;
     }
   }
@@ -219,26 +189,13 @@ class World {
         }
       });
 
-      if (this.endboss && !this.endboss.isDead() && !bottle.isSplashing) {
+      if (this.endboss && !this.endboss.isDead && !bottle.isSplashing) {
         if (bottle.isColliding(this.endboss)) {
           bottle.splash("endboss");
           this.endboss.takeDamage();
-          this.endbossHitCount++;
-          
-          if (this.DEBUG_MODE) {
-            console.log("Endboss getroffen! Energie:", this.endboss.health, "Treffer:", this.endbossHitCount);
-          }
 
-          // Endboss-Statusleiste aktualisieren (alle 2 Treffer)
-          if (this.endbossStatusBar && this.endbossHitCount % 2 === 0) {
-            console.log(`Aktualisiere Endboss-Statusleiste: Health=${this.endboss.health}, Treffer=${this.endbossHitCount}`);
-            this.endbossStatusBar.setPercentage(this.endboss.health);
-          }
-
-          if (!this.endboss.isPlayingCustomAnimation) {
-            this.currentState = "hurt";
-            this.cycleEndbossAnimation();
-          }
+          const healthPercent = (this.endboss.energy / this.endboss.maxEnergy) * 100;
+          this.registerEndbossHit(healthPercent, this.endbossHitCount + 1);
         }
       }
     });
@@ -319,34 +276,18 @@ class World {
   }
 
   clearAllIntervals() {
-    if (this.drawInterval) {
-      clearInterval(this.drawInterval);
-    }
-    if (this.checkCollisionsInterval) {
-      clearInterval(this.checkCollisionsInterval);
-    }
-    if (this.runInterval) {
-      clearInterval(this.runInterval);
-    }
+    if (this.drawInterval) clearInterval(this.drawInterval);
+    if (this.checkCollisionsInterval) clearInterval(this.checkCollisionsInterval);
+    if (this.runInterval) clearInterval(this.runInterval);
 
-    if (this.character) {
-      this.character.clearAllIntervals();
-    }
+    if (this.character) this.character.clearAllIntervals?.();
 
     if (this.enemies) {
-      this.enemies.forEach((enemy) => {
-        if (enemy.clearAllIntervals) {
-          enemy.clearAllIntervals();
-        }
-      });
+      this.enemies.forEach((enemy) => enemy.clearAllIntervals?.());
     }
 
     if (this.bottles) {
-      this.bottles.forEach((bottle) => {
-        if (bottle.clearAllIntervals) {
-          bottle.clearAllIntervals();
-        }
-      });
+      this.bottles.forEach((bottle) => bottle.clearAllIntervals?.());
     }
 
     console.log("Alle Intervalle wurden gestoppt");
