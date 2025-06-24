@@ -24,7 +24,7 @@ function createBackgroundObjects() {
 /**
  * Erstellt ein Array aus normalen und kleinen Hühnern sowie einem Endboss.
  * Hühner erscheinen gruppiert im Abstand zueinander.
- * @returns {MovableObject[]} Array mit Gegnern.
+ * @returns {MovableObject[]} Array mit Gegnerobjekten.
  */
 function createEnemies() {
   const enemies = [];
@@ -48,7 +48,7 @@ function createEnemies() {
 
 /**
  * Erstellt ein Array aus Wolkenobjekten mit gleichmäßigem Abstand.
- * @returns {Cloud[]} Array der Cloud-Objekte.
+ * @returns {Cloud[]} Array von Cloud-Objekten.
  */
 function createClouds() {
   const clouds = [];
@@ -66,7 +66,7 @@ function createClouds() {
 /**
  * Erstellt ein Array aus zufällig verteilten Münzen im erlaubten Bereich.
  * @param {number} count - Anzahl der zu erzeugenden Münzen.
- * @param {number} endBossZone - Bereich am Levelende, in dem keine Münzen erscheinen sollen.
+ * @param {number} [endBossZone=800] - Bereich am Levelende, in dem keine Münzen erscheinen sollen.
  * @returns {Coin[]} Array mit zufällig platzierten Münzen.
  */
 function createCoins(count, endBossZone = 800) {

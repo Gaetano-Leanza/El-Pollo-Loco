@@ -1,8 +1,23 @@
+/**
+ * StatusBar-Klasse zur Darstellung verschiedener Statusleisten (z.B. Gesundheit, Münzen).
+ * Erweitert DrawableObject und lädt Bilder je nach Typ vor.
+ */
 class StatusBar extends DrawableObject {
+  /** @type {number} Aktueller Prozentsatz der Statusleiste (0-100) */
   percentage = 100;
+  /** @type {boolean} Gibt an, ob alle Bilder geladen wurden */
   imagesLoaded = false;
+  /** @type {number} Letzter gesetzter Prozentsatz, um unnötige Updates zu vermeiden */
   lastPercentage = -1;
+  /** @type {Object.<string, HTMLImageElement>} Zwischenspeicher für geladene Bilder */
+  imageCache = {};
 
+  /**
+   * Erzeugt eine neue StatusBar-Instanz.
+   * @param {string} type - Typ der StatusBar (z.B. "health", "bottle", "coin", "endboss").
+   * @param {number} x - X-Position auf dem Canvas.
+   * @param {number} y - Y-Position auf dem Canvas.
+   */
   constructor(type, x, y) {
     super();
     this.type = type;
@@ -12,10 +27,13 @@ class StatusBar extends DrawableObject {
     this.height = 60;
     this.IMAGES = this.getImagesForType(type);
     this.loadAllImages();
-    
-    console.log(`[StatusBar] Created: ${type} at (${x},${y})`);
   }
 
+  /**
+   * Lädt alle Bilder der StatusBar und speichert sie im Cache.
+   * Setzt imagesLoaded auf true, wenn alle Bilder fertig geladen sind.
+   * @private
+   */
   loadAllImages() {
     let loaded = 0;
     this.IMAGES.forEach(path => {
@@ -25,15 +43,18 @@ class StatusBar extends DrawableObject {
         if (loaded === this.IMAGES.length) {
           this.imagesLoaded = true;
           this.setPercentage(this.percentage);
-          console.log(`[StatusBar] All images loaded for: ${this.type}`);
         }
       };
-      img.onerror = () => console.error(`[StatusBar] Error loading: ${path}`);
       img.src = path;
       this.imageCache[path] = img;
     });
   }
 
+  /**
+   * Liefert die Bildpfade passend zum StatusBar-Typ zurück.
+   * @param {string} type - Typ der StatusBar.
+   * @returns {string[]} Array von Bildpfaden.
+   */
   getImagesForType(type) {
     const paths = {
       health: [
@@ -72,29 +93,40 @@ class StatusBar extends DrawableObject {
     return paths[type] || [];
   }
 
+  /**
+   * Setzt den aktuellen Prozentsatz der StatusBar und aktualisiert das Bild.
+   * Verhindert unnötige Updates, wenn sich der Wert nicht ändert.
+   * @param {number} percentage - Neuer Prozentsatz (0-100).
+   */
   setPercentage(percentage) {
     if (percentage === this.lastPercentage) return;
-    
+
     this.percentage = Math.max(0, Math.min(100, percentage));
     this.lastPercentage = this.percentage;
+
     const index = this.resolveImageIndex();
     const path = this.IMAGES[index];
-    
-    console.log(`[StatusBar] Set ${this.type}: ${percentage}% -> index ${index}, image: ${path}`);
-    
+
     if (this.imageCache[path]) {
       this.img = this.imageCache[path];
-    } else {
-      console.warn(`[StatusBar] Image not cached: ${path}`);
     }
   }
 
+  /**
+   * Setzt den Status basierend auf Treffern und maximaler Trefferzahl.
+   * @param {number} hits - Aktuelle Trefferzahl.
+   * @param {number} maxHits - Maximale Trefferzahl.
+   */
   setHits(hits, maxHits) {
     const percentage = Math.max(0, 100 - (hits / maxHits) * 100);
-    console.log(`[StatusBar] Set hits: ${hits}/${maxHits} -> ${percentage}%`);
     this.setPercentage(percentage);
   }
 
+  /**
+   * Ermittelt den Index des Bildes basierend auf dem aktuellen Prozentsatz.
+   * @returns {number} Index des Bildes im Array.
+   * @private
+   */
   resolveImageIndex() {
     if (this.percentage === 100) return 5;
     if (this.percentage >= 80) return 4;
@@ -104,36 +136,22 @@ class StatusBar extends DrawableObject {
     return 0;
   }
 
+  /**
+   * Zeichnet die StatusBar auf das übergebene Canvas-Kontext-Objekt.
+   * Zeichnet nur, wenn Bilder geladen und bereit sind.
+   * @param {CanvasRenderingContext2D} ctx - Canvas-Zeichenkontext.
+   */
   draw(ctx) {
     if (!this.imagesLoaded) {
-      console.warn(`[StatusBar] Drawing before images loaded: ${this.type}`);
-      this.drawPlaceholder(ctx);
-      return;
+      return; // Keine Zeichnung, solange Bilder nicht geladen sind
     }
 
     try {
       if (this.img && this.img.complete) {
         ctx.drawImage(this.img, this.x, this.y, this.width, this.height);
-      } else {
-        console.error(`[StatusBar] Image not ready: ${this.type} - ${this.img?.src}`);
-        this.drawPlaceholder(ctx);
       }
-    } catch (error) {
-      console.error(`[StatusBar] Drawing error: ${error.message}`);
-      this.drawPlaceholder(ctx);
+    } catch {
+      // Fehler ignorieren oder optional Fehlerbehandlung hinzufügen
     }
-  }
-
-  drawPlaceholder(ctx) {
-    ctx.fillStyle = this.type === "endboss" ? "rgba(0,0,255,0.5)" : "rgba(255,0,0,0.5)";
-    ctx.fillRect(this.x, this.y, this.width, this.height);
-    
-    ctx.fillStyle = "white";
-    ctx.font = "16px Arial";
-    ctx.fillText(`${this.type}: ${this.percentage}%`, this.x + 10, this.y + 30);
-    
-    ctx.strokeStyle = "black";
-    ctx.lineWidth = 2;
-    ctx.strokeRect(this.x, this.y, this.width, this.height);
   }
 }

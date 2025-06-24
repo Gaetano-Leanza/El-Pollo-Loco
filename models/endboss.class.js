@@ -73,12 +73,18 @@ class Endboss extends MovableObject {
 
   constructor() {
     super();
+    this.maxEnergy = 100;
+    this.energy = this.maxEnergy;
+    this.isDead = false;
     this.loadImage(this.IMAGES_ALERT[0]);
     this.loadImages(this.IMAGES_ALERT);
     this.loadImages(this.IMAGES_WALK);
     this.loadImages(this.IMAGES_ATTACK);
     this.loadImages(this.IMAGES_HURT);
     this.loadImages(this.IMAGES_DEAD);
+    this.victorySound = new Audio("audio/winner.mp4"); // Sound vorladen
+    this.victorySound.volume = 0.3; // 30% Lautstärke (Wert zwischen 0 und 1)
+
     this.x = 4000;
     this.loadVictoryImage();
     this.animate();
@@ -102,7 +108,12 @@ class Endboss extends MovableObject {
   animate() {
     this.animationInterval = setInterval(() => {
       if (this.isDead) {
-        this.playDeathAnimation();
+        if (!this.deathSoundPlayed) {
+          // Verhindert mehrfaches Abspielen
+          this.playDeathSound(); // Sound abspielen
+          this.deathSoundPlayed = true;
+        }
+        this.playDeathAnimation(); // Animation abspielen
       } else if (this.isHurt) {
         this.playHurtAnimation();
       } else if (this.isAttacking) {
@@ -115,6 +126,14 @@ class Endboss extends MovableObject {
         this.playAlertAnimation();
       }
     }, 200);
+  }
+
+  // Neue Methode für den Victory-Sound
+  playDeathSound() {
+    const victorySound = new Audio("audio/winner.mp4");
+    victorySound
+      .play()
+      .catch((e) => console.error("Sound konnte nicht abgespielt werden:", e));
   }
 
   startMovement() {
@@ -266,7 +285,11 @@ class Endboss extends MovableObject {
     const canvas = ctx.canvas;
     const maxWidth = canvas.width * 0.8;
     const maxHeight = canvas.height * 0.8;
-    let scale = Math.min(maxWidth / this.victoryImage.width, maxHeight / this.victoryImage.height, 1);
+    let scale = Math.min(
+      maxWidth / this.victoryImage.width,
+      maxHeight / this.victoryImage.height,
+      1
+    );
 
     const finalWidth = this.victoryImage.width * scale;
     const finalHeight = this.victoryImage.height * scale;
@@ -300,7 +323,8 @@ class Endboss extends MovableObject {
 
   returnToStartScreen() {
     if (this.animationInterval) clearInterval(this.animationInterval);
-    if (this.movementAnimationId) cancelAnimationFrame(this.movementAnimationId);
+    if (this.movementAnimationId)
+      cancelAnimationFrame(this.movementAnimationId);
 
     if (typeof world !== "undefined" && world?.clearAllIntervals) {
       world.clearAllIntervals();
@@ -331,17 +355,32 @@ class Endboss extends MovableObject {
 
     this.lastHitTime = currentTime;
     this.hitCounter++;
-    this.health = Math.max(0, 100 - this.hitCounter * 20);
 
+    // Energie (health) aktualisieren (20% Schaden pro Treffer)
+    this.energy = Math.max(0, 100 - this.hitCounter * 20);
+
+    // Welt über Treffer informieren (nur energy übergeben)
     if (this.worldReference?.registerEndbossHit) {
-      this.worldReference.registerEndbossHit(this.health, this.hitCounter);
+      this.worldReference.registerEndbossHit(this.energy);
     }
 
+    // ▶️ Sound abspielen, wenn der Endboss getroffen wird
+    const hurtSound = new Audio("audio/hurt-endboss.mp4");
+    hurtSound.volume = 0.6;
+    hurtSound.currentTime = 0;
+    hurtSound
+      .play()
+      .catch((e) =>
+        console.warn("Endboss-Hurt-Sound konnte nicht abgespielt werden:", e)
+      );
+
+    // Bei Tod des Endbosses
     if (this.hitCounter >= this.maxHits) {
-      this.health = 0;
+      this.energy = 0;
       this.isDead = true;
       this.playDeathAnimation();
     } else {
+      // Verletzungsanimation auslösen
       this.isHurt = true;
       this.hurtAnimationPlaying = false;
       this.isWalking = false;
@@ -360,7 +399,8 @@ class Endboss extends MovableObject {
   findCanvasContext() {
     if (typeof world !== "undefined" && world?.ctx) return world.ctx;
     if (window.canvas?.getContext) return window.canvas.getContext("2d");
-    if (document.querySelector("canvas")) return document.querySelector("canvas").getContext("2d");
+    if (document.querySelector("canvas"))
+      return document.querySelector("canvas").getContext("2d");
     if (window.ctx) return window.ctx;
 
     console.error("Kein Canvas Context gefunden!");
@@ -378,7 +418,8 @@ class Endboss extends MovableObject {
 
   restartGame() {
     if (this.animationInterval) clearInterval(this.animationInterval);
-    if (this.movementAnimationId) cancelAnimationFrame(this.movementAnimationId);
+    if (this.movementAnimationId)
+      cancelAnimationFrame(this.movementAnimationId);
 
     if (typeof world !== "undefined" && world) world.clearAllIntervals();
 
