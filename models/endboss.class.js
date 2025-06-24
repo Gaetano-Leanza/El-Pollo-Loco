@@ -82,8 +82,8 @@ class Endboss extends MovableObject {
     this.loadImages(this.IMAGES_ATTACK);
     this.loadImages(this.IMAGES_HURT);
     this.loadImages(this.IMAGES_DEAD);
-    this.victorySound = new Audio("audio/winner.mp4"); // Sound vorladen
-    this.victorySound.volume = 0.3; // 30% Lautstärke (Wert zwischen 0 und 1)
+    this.victorySound = new Audio("audio/winner.mp4"); 
+    this.victorySound.volume = 0.1; 
 
     this.x = 4000;
     this.loadVictoryImage();
@@ -347,7 +347,7 @@ class Endboss extends MovableObject {
     if (typeof showStartScreen === "function") showStartScreen();
   }
 
-  takeDamage() {
+  hit() {
     if (this.isDead) return;
 
     const currentTime = Date.now();
@@ -356,15 +356,12 @@ class Endboss extends MovableObject {
     this.lastHitTime = currentTime;
     this.hitCounter++;
 
-    // Energie (health) aktualisieren (20% Schaden pro Treffer)
     this.energy = Math.max(0, 100 - this.hitCounter * 20);
 
-    // Welt über Treffer informieren (nur energy übergeben)
     if (this.worldReference?.registerEndbossHit) {
       this.worldReference.registerEndbossHit(this.energy);
     }
 
-    // ▶️ Sound abspielen, wenn der Endboss getroffen wird
     const hurtSound = new Audio("audio/hurt-endboss.mp4");
     hurtSound.volume = 0.6;
     hurtSound.currentTime = 0;
@@ -374,13 +371,11 @@ class Endboss extends MovableObject {
         console.warn("Endboss-Hurt-Sound konnte nicht abgespielt werden:", e)
       );
 
-    // Bei Tod des Endbosses
     if (this.hitCounter >= this.maxHits) {
       this.energy = 0;
       this.isDead = true;
       this.playDeathAnimation();
     } else {
-      // Verletzungsanimation auslösen
       this.isHurt = true;
       this.hurtAnimationPlaying = false;
       this.isWalking = false;

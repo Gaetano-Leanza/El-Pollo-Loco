@@ -39,6 +39,8 @@ class Coin extends DrawableObject {
 
   /**
    * Updates the blinking animation phase.
+   * Should be called every frame to animate the coin.
+   * @returns {void}
    */
   update() {
     this.blinkPhase += this.blinkSpeed;
@@ -47,6 +49,7 @@ class Coin extends DrawableObject {
   /**
    * Draws the coin on the given canvas context with blinking opacity.
    * @param {CanvasRenderingContext2D} ctx - The canvas rendering context.
+   * @returns {void}
    */
   draw(ctx) {
     const opacity = 0.7 + 0.3 * Math.sin(this.blinkPhase);
@@ -58,6 +61,7 @@ class Coin extends DrawableObject {
 
   /**
    * Returns the hitbox rectangle for collision detection.
+   * The hitbox is smaller than the full image to better fit the visible coin area.
    * @returns {{x: number, y: number, width: number, height: number}} Hitbox dimensions.
    */
   getHitbox() {
@@ -69,6 +73,11 @@ class Coin extends DrawableObject {
     };
   }
 
+  /**
+   * Plays a sound when the coin is collected.
+   * Optional: Can be extended to hide or remove the coin from the game world.
+   * @returns {void}
+   */
   collect() {
     this.collectSound.play();
     // Optional: Münze verstecken, entfernen oder als eingesammelt markieren

@@ -49,6 +49,21 @@ canvas {
   margin: 0 auto;
 }
 
+  #rotate-warning {
+    display: none;
+    position: fixed;
+    inset: 0;
+    background-color: #111;
+    color: #fff;
+    font-family: sans-serif;
+    font-size: 18px;
+    z-index: 9999;
+    align-items: center;
+    justify-content: center;
+    text-align: center;
+    padding: 20px;
+  }
+
 #startButton {
   background-color: #ffcc00;
   color: #4b1e00;
@@ -89,6 +104,7 @@ canvas {
   animation: coin-blink 1.5s infinite;
   transition: opacity 0.3s ease, transform 0.3s ease;
 }
+
 @media only screen and (max-width: 950px) {
   .title,
   .controls {
@@ -151,9 +167,31 @@ canvas {
     cursor: pointer;
     user-select: none;
   }
+
+
 }
 
-@media only screen and (min-width: 950px) {
+/* Nur auf Geräten mit Touch UND im Hochformat anzeigen */
+@media (pointer: coarse) and (orientation: portrait) {
+  #rotate-warning {
+    display: flex;
+  }
+
+  canvas,
+  .mobile-controls,
+  .game-container {
+    display: none !important;
+  }
+}
+
+/* Ergänzung: Touch-Only Darstellung für mobile-controls */
+@media (pointer: coarse) {
+  .mobile-controls {
+    display: flex !important;
+  }
+}
+
+@media (pointer: fine) {
   .mobile-controls {
     display: none !important;
   }

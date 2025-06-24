@@ -139,7 +139,7 @@ class BaseChicken extends MovableObject {
    * Verarbeitet Schaden am Huhn, setzt Zustand auf tot, stoppt Animation und Sound.
    * Entfernt Huhn nach 1 Sekunde.
    */
-  takeDamage() {
+  hit() {
     this.isDead = true;
     this.stopAnimation();
     this.img.src = this.IMAGES_DEAD[0];
