@@ -1,127 +1,98 @@
-let chickens = [];
-let chickensPerGroup = 3;
-let groupSpacing = 1300;
-let chickenSpacing = 100;
-let startX = 500;
+/**
+ * Erstellt ein Array von Hintergrundobjekten mit abwechselnden Ebenenbildern.
+ * Die Ebenen wiederholen sich alle 719 Pixel, beginnend bei -719.
+ * @returns {BackgroundObject[]} Array mit Hintergrundobjekten.
+ */
+function createBackgroundObjects() {
+  const objects = [];
+  const width = 719;
+  const segments = 7;
 
-for (let i = 0; i < 9; i++) {
-  let group = Math.floor(i / chickensPerGroup);
-  let positionInGroup = i % chickensPerGroup;
+  for (let i = -1; i < segments; i++) {
+    const x = i * width;
+    const suffix = i % 2 === 0 ? "1" : "2";
 
-  let x = startX + group * groupSpacing + positionInGroup * chickenSpacing;
+    objects.push(new BackgroundObject("../img/5_background/layers/air.png", x));
+    objects.push(new BackgroundObject(`../img/5_background/layers/3_third_layer/${suffix}.png`, x));
+    objects.push(new BackgroundObject(`../img/5_background/layers/2_second_layer/${suffix}.png`, x));
+    objects.push(new BackgroundObject(`../img/5_background/layers/1_first_layer/${suffix}.png`, x));
+  }
 
-  chickens.push(new Chicken(x)); // normale Chicken
-  chickens.push(new ChickenSmall(x + 500)); // kleine Chicken 500px weiter rechts
+  return objects;
 }
 
-chickens.push(new Endboss());
+/**
+ * Erstellt ein Array aus normalen und kleinen Hühnern sowie einem Endboss.
+ * Hühner erscheinen gruppiert im Abstand zueinander.
+ * @returns {MovableObject[]} Array mit Gegnern.
+ */
+function createEnemies() {
+  const enemies = [];
+  const chickensPerGroup = 3;
+  const groupSpacing = 1300;
+  const chickenSpacing = 100;
+  const startX = 500;
 
-const clouds = (() => {
-  let clouds = [];
-  let startX = 100;
-  let spacing = 500;
-  let numberOfClouds = 20;
+  for (let i = 0; i < 9; i++) {
+    const group = Math.floor(i / chickensPerGroup);
+    const positionInGroup = i % chickensPerGroup;
+    const x = startX + group * groupSpacing + positionInGroup * chickenSpacing;
+
+    enemies.push(new Chicken(x)); // Normales Huhn
+    enemies.push(new ChickenSmall(x + 500)); // Kleines Huhn (versetzt)
+  }
+
+  enemies.push(new Endboss()); // Am Ende kommt der Endgegner
+  return enemies;
+}
+
+/**
+ * Erstellt ein Array aus Wolkenobjekten mit gleichmäßigem Abstand.
+ * @returns {Cloud[]} Array der Cloud-Objekte.
+ */
+function createClouds() {
+  const clouds = [];
+  const startX = 100;
+  const spacing = 500;
+  const numberOfClouds = 20;
 
   for (let i = 0; i < numberOfClouds; i++) {
     clouds.push(new Cloud(startX + i * spacing));
   }
+
   return clouds;
-})();
+}
 
-const backgroundObjects = [
-  new BackgroundObject("../img/5_background/layers/air.png", -719),
-  new BackgroundObject("../img/5_background/layers/3_third_layer/2.png", -719),
-  new BackgroundObject("../img/5_background/layers/2_second_layer/2.png", -719),
-  new BackgroundObject("../img/5_background/layers/1_first_layer/2.png", -719),
-  new BackgroundObject("../img/5_background/layers/air.png", 0),
-  new BackgroundObject("../img/5_background/layers/3_third_layer/1.png", 0),
-  new BackgroundObject("../img/5_background/layers/2_second_layer/1.png", 0),
-  new BackgroundObject("../img/5_background/layers/1_first_layer/1.png", 0),
-  new BackgroundObject("../img/5_background/layers/air.png", 719),
-  new BackgroundObject("../img/5_background/layers/3_third_layer/2.png", 719),
-  new BackgroundObject("../img/5_background/layers/2_second_layer/2.png", 719),
-  new BackgroundObject("../img/5_background/layers/1_first_layer/2.png", 719),
-  new BackgroundObject("../img/5_background/layers/air.png", 719 * 2),
-  new BackgroundObject(
-    "../img/5_background/layers/3_third_layer/1.png",
-    719 * 2
-  ),
-  new BackgroundObject(
-    "../img/5_background/layers/2_second_layer/1.png",
-    719 * 2
-  ),
-  new BackgroundObject(
-    "../img/5_background/layers/1_first_layer/1.png",
-    719 * 2
-  ),
-  new BackgroundObject("../img/5_background/layers/air.png", 719 * 3),
-  new BackgroundObject(
-    "../img/5_background/layers/3_third_layer/2.png",
-    719 * 3
-  ),
-  new BackgroundObject(
-    "../img/5_background/layers/2_second_layer/2.png",
-    719 * 3
-  ),
-  new BackgroundObject(
-    "../img/5_background/layers/1_first_layer/2.png",
-    719 * 3
-  ),
-  new BackgroundObject("../img/5_background/layers/air.png", 719 * 4),
-  new BackgroundObject(
-    "../img/5_background/layers/3_third_layer/1.png",
-    719 * 4
-  ),
-  new BackgroundObject(
-    "../img/5_background/layers/2_second_layer/1.png",
-    719 * 4
-  ),
-  new BackgroundObject(
-    "../img/5_background/layers/1_first_layer/1.png",
-    719 * 4
-  ),
-  new BackgroundObject("../img/5_background/layers/air.png", 719 * 5),
-  new BackgroundObject(
-    "../img/5_background/layers/3_third_layer/2.png",
-    719 * 5
-  ),
-  new BackgroundObject(
-    "../img/5_background/layers/2_second_layer/2.png",
-    719 * 5
-  ),
-  new BackgroundObject(
-    "../img/5_background/layers/1_first_layer/2.png",
-    719 * 5
-  ),
-  new BackgroundObject("../img/5_background/layers/air.png", 719 * 6),
-  new BackgroundObject(
-    "../img/5_background/layers/3_third_layer/1.png",
-    719 * 6
-  ),
-  new BackgroundObject(
-    "../img/5_background/layers/2_second_layer/1.png",
-    719 * 6
-  ),
-  new BackgroundObject(
-    "../img/5_background/layers/1_first_layer/1.png",
-    719 * 6
-  ),
-];
-
-const coinCount = 20;
-const coins = [];
-const endBossZone = 800;
-
-for (let i = 0; i < coinCount; i++) {
+/**
+ * Erstellt ein Array aus zufällig verteilten Münzen im erlaubten Bereich.
+ * @param {number} count - Anzahl der zu erzeugenden Münzen.
+ * @param {number} endBossZone - Bereich am Levelende, in dem keine Münzen erscheinen sollen.
+ * @returns {Coin[]} Array mit zufällig platzierten Münzen.
+ */
+function createCoins(count, endBossZone = 800) {
+  const coins = [];
   const minY = 100;
   const maxY = 280;
   const maxX = 5000 - endBossZone;
 
-  const validMaxY = Math.max(minY, maxY);
+  for (let i = 0; i < count; i++) {
+    const y = minY + Math.random() * (maxY - minY);
+    const x = Math.random() * maxX;
+    coins.push(new Coin(x, y));
+  }
 
-  coins.push(
-    new Coin(Math.random() * maxX, minY + Math.random() * (validMaxY - minY))
-  );
+  return coins;
 }
 
+// === Level-Zusammenstellung ===
+
+const chickens = createEnemies();
+const clouds = createClouds();
+const backgroundObjects = createBackgroundObjects();
+const coins = createCoins(20); // 20 Münzen erzeugen
+
+/**
+ * Das erste Level des Spiels mit Gegnern, Hintergrund, Wolken und Münzen.
+ * @type {Level}
+ */
 const level1 = new Level(chickens, clouds, backgroundObjects, coins, []);

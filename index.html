@@ -1,11 +1,19 @@
 <!DOCTYPE html>
 <html lang="de">
   <head>
+    <!-- Zeichencodierung -->
     <meta charset="UTF-8" />
+
+    <!-- Responsives Layout für mobile Geräte -->
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+
+    <!-- Titel des Spiels -->
     <title>El Pollo Loco</title>
+
+    <!-- Verlinkung zur CSS-Datei für das Styling -->
     <link rel="stylesheet" href="style.css" />
 
+    <!-- Einbindung aller JavaScript-Klassen (Modelle) für das Spiel -->
     <script src="models/drawable-object.class.js"></script>
     <script src="models/movable-object.class.js"></script>
     <script src="models/throwable-object.class.js"></script>
@@ -21,16 +29,28 @@
     <script src="models/endboss.class.js"></script>
     <script src="models/coin.class.js"></script>
     <script src="models/bottle.class.js"></script>
+
+    <!-- Level-Konfiguration -->
     <script src="levels/level1.js"></script>
+
+    <!-- Spiellogik (Steuerung, Initialisierung etc.) -->
     <script src="models/world.class.js"></script>
     <script src="js/game.js" defer></script>
   </head>
 
   <body onload="showStartScreen()">
+    <!-- Container für das Spiel -->
     <div class="game-container">
+      <!-- Spieltitel -->
       <img class="title" src="../img/title.PNG" alt="El Pollo Loco" />
+
+      <!-- Spielfläche -->
       <canvas id="canvas" width="720" height="480"></canvas>
+
+      <!-- Startbutton -->
       <button id="startButton" onclick="startGame()">Starte Spiel</button>
+
+      <!-- Steuerungsanzeige (wird erst später eingeblendet) -->
       <img
         id="controlsImage"
         class="controls"
@@ -40,11 +60,17 @@
       />
     </div>
 
+    <!-- Mobile Touch-Steuerelemente -->
     <div class="mobile-controls">
       <div class="left-right-container">
+        <!-- Linke Richtung -->
         <div id="leftBtn" class="touch-btn">←</div>
+
+        <!-- Rechte Richtung -->
         <div id="rightBtn" class="touch-btn">→</div>
       </div>
+
+      <!-- Springen und Werfen -->
       <div class="right-buttons">
         <div id="jumpBtn" class="touch-btn">↑</div>
         <div id="throwBtn" class="touch-btn">✸</div>
