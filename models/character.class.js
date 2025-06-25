@@ -7,85 +7,166 @@
  * @class Character
  */
 class Character extends MovableObject {
-  /** @static {number} Time in milliseconds before short idle animation starts */
-  static IDLE_TIME_SHORT = 2000;
-  
-  /** @static {number} Time in milliseconds before long idle animation starts */
-  static IDLE_TIME_LONG = 4000;
-  
-  /** @static {number} Interval in milliseconds for animation frame updates */
+  /** 
+   * Time in milliseconds before short idle animation starts 
+   * @static {number}
+   */
+  static IDLE_TIME_SHORT = 500;
+
+  /** 
+   * Time in milliseconds before long idle animation starts 
+   * @static {number}
+   */
+  static IDLE_TIME_LONG = 3000;
+
+  /** 
+   * Interval in milliseconds for animation frame updates 
+   * @static {number}
+   */
   static ANIMATION_INTERVAL = 100;
-  
-  /** @static {number} Duration in milliseconds for each death animation frame */
+
+  /** 
+   * Duration in milliseconds for each death animation frame 
+   * @static {number}
+   */
   static DEATH_ANIMATION_FRAME_DURATION = 150;
-  
-  /** @static {number} Time in milliseconds to display game over screen */
+
+  /** 
+   * Time in milliseconds to display game over screen 
+   * @static {number}
+   */
   static GAME_OVER_DISPLAY_TIME = 3000;
-  
-  /** @static {number} Scale factor for canvas overlay images */
+
+  /** 
+   * Scale factor for canvas overlay images (0.8 = 80% of canvas size) 
+   * @static {number}
+   */
   static CANVAS_SCALE = 0.8;
 
-  /** @type {number} Character sprite height in pixels */
+  /** 
+   * Character sprite height in pixels 
+   * @type {number}
+   */
   height = 280;
-  
-  /** @type {number} Character y-position on canvas */
+
+  /** 
+   * Character y-position on canvas 
+   * @type {number}
+   */
   y = 80;
-  
-  /** @type {number} Character movement speed in pixels per frame */
+
+  /** 
+   * Character movement speed in pixels per frame 
+   * @type {number}
+   */
   speed = 10;
-  
-  /** @type {number} Horizontal offset for hitbox positioning */
+
+  /** 
+   * Horizontal offset for hitbox positioning from sprite left edge 
+   * @type {number}
+   */
   hitboxOffsetX = 25;
-  
-  /** @type {number} Vertical offset for hitbox positioning */
+
+  /** 
+   * Vertical offset for hitbox positioning from sprite top edge 
+   * @type {number}
+   */
   hitboxOffsetY = 130;
-  
-  /** @type {number} Reduction in hitbox width from sprite width */
+
+  /** 
+   * Reduction in hitbox width from sprite width 
+   * @type {number}
+   */
   hitboxWidthReduction = 50;
-  
-  /** @type {number} Reduction in hitbox height from sprite height */
+
+  /** 
+   * Reduction in hitbox height from sprite height 
+   * @type {number}
+   */
   hitboxHeightReduction = 160;
-  
-  /** @type {number} Number of coins currently collected by character */
+
+  /** 
+   * Number of coins currently collected by character 
+   * @type {number}
+   */
   collectedCoins = 0;
-  
-  /** @type {number} Maximum number of coins that can be collected */
+
+  /** 
+   * Maximum number of coins that can be collected 
+   * @type {number}
+   */
   maxCoins = 20;
-  
-  /** @type {number} Number of bottles currently collected by character */
+
+  /** 
+   * Number of bottles currently collected by character 
+   * @type {number}
+   */
   collectedBottles = 0;
-  
-  /** @type {number} Maximum number of bottles that can be collected */
+
+  /** 
+   * Maximum number of bottles that can be collected 
+   * @type {number}
+   */
   maxBottles = 20;
-  
-  /** @type {number} Timestamp of last movement for idle animation timing */
+
+  /** 
+   * Timestamp of last movement for idle animation timing 
+   * @type {number}
+   */
   lastMoveTime = Date.now();
-  
-  /** @type {number|undefined} Interval ID for idle animation timer */
+
+  /** 
+   * Interval ID for idle animation timer 
+   * @type {number|undefined}
+   */
   idleInterval;
-  
-  /** @type {boolean} Flag indicating if character is currently throwing a bottle */
+
+  /** 
+   * Flag indicating if character is currently throwing a bottle 
+   * @type {boolean}
+   */
   isThrowingBottle = false;
-  
-  /** @type {boolean} Flag indicating if character is in dying state */
+
+  /** 
+   * Flag indicating if character is in dying state 
+   * @type {boolean}
+   */
   isDying = false;
-  
-  /** @type {boolean} Flag indicating if death animation has started */
+
+  /** 
+   * Flag indicating if death animation has started 
+   * @type {boolean}
+   */
   deathAnimationStarted = false;
-  
-  /** @type {boolean} Flag indicating if game over overlay should be shown */
+
+  /** 
+   * Flag indicating if game over overlay should be shown 
+   * @type {boolean}
+   */
   showGameOverOverlay = false;
-  
-  /** @type {boolean} Flag to prevent multiple hurt sound plays */
+
+  /** 
+   * Flag to prevent multiple hurt sound plays 
+   * @type {boolean}
+   */
   hurt_sound_played = false;
-  
-  /** @type {Object} Reference to the game world object */
+
+  /** 
+   * Reference to the game world object 
+   * @type {Object}
+   */
   world;
-  
-  /** @type {CanvasRenderingContext2D} Reference to canvas 2D context */
+
+  /** 
+   * Reference to canvas 2D context 
+   * @type {CanvasRenderingContext2D}
+   */
   ctx;
-  
-  /** @type {HTMLCanvasElement} Reference to HTML canvas element */
+
+  /** 
+   * Reference to HTML canvas element 
+   * @type {HTMLCanvasElement}
+   */
   canvas;
 
   /**
@@ -124,7 +205,10 @@ class Character extends MovableObject {
     return this._death_sound;
   }
 
-  /** @type {string[]} Array of walking animation image paths */
+  /** 
+   * Array of walking animation image paths 
+   * @type {string[]}
+   */
   IMAGES_WALKING = [
     "../img/2_character_pepe/2_walk/W-21.png",
     "../img/2_character_pepe/2_walk/W-22.png",
@@ -134,7 +218,10 @@ class Character extends MovableObject {
     "../img/2_character_pepe/2_walk/W-26.png",
   ];
 
-  /** @type {string[]} Array of jumping animation image paths */
+  /** 
+   * Array of jumping animation image paths 
+   * @type {string[]}
+   */
   IMAGES_JUMPING = [
     "../img/2_character_pepe/3_jump/J-31.png",
     "../img/2_character_pepe/3_jump/J-32.png",
@@ -147,7 +234,10 @@ class Character extends MovableObject {
     "../img/2_character_pepe/3_jump/J-39.png",
   ];
 
-  /** @type {string[]} Array of death animation image paths */
+  /** 
+   * Array of death animation image paths 
+   * @type {string[]}
+   */
   IMAGES_DEAD = [
     "../img/2_character_pepe/5_dead/D-51.png",
     "../img/2_character_pepe/5_dead/D-52.png",
@@ -158,14 +248,20 @@ class Character extends MovableObject {
     "../img/2_character_pepe/5_dead/D-57.png",
   ];
 
-  /** @type {string[]} Array of hurt animation image paths */
+  /** 
+   * Array of hurt animation image paths 
+   * @type {string[]}
+   */
   IMAGES_HURT = [
     "../img/2_character_pepe/4_hurt/H-41.png",
     "../img/2_character_pepe/4_hurt/H-42.png",
     "../img/2_character_pepe/4_hurt/H-43.png",
   ];
 
-  /** @type {string[]} Array of short idle animation image paths */
+  /** 
+   * Array of short idle animation image paths 
+   * @type {string[]}
+   */
   IMAGES_IDLE = [
     "../img/2_character_pepe/1_idle/idle/I-1.png",
     "../img/2_character_pepe/1_idle/idle/I-2.png",
@@ -179,7 +275,10 @@ class Character extends MovableObject {
     "../img/2_character_pepe/1_idle/idle/I-10.png",
   ];
 
-  /** @type {string[]} Array of long idle animation image paths */
+  /** 
+   * Array of long idle animation image paths 
+   * @type {string[]}
+   */
   IMAGES_LONG_IDLE = [
     "../img/2_character_pepe/1_idle/long_idle/I-11.png",
     "../img/2_character_pepe/1_idle/long_idle/I-12.png",
@@ -200,8 +299,10 @@ class Character extends MovableObject {
    */
   constructor() {
     super();
+    this.gameOverHandler = new GameOver();
     this.initializeImages();
     this.applyGravity();
+    this.gameOverHandler.loadGameOverImage();
   }
 
   /**
@@ -217,11 +318,10 @@ class Character extends MovableObject {
       this.IMAGES_DEAD,
       this.IMAGES_HURT,
       this.IMAGES_IDLE,
-      this.IMAGES_LONG_IDLE
+      this.IMAGES_LONG_IDLE,
     ];
-    
-    imageArrays.forEach(images => this.loadImages(images));
-    this.loadGameOverImage();
+
+    imageArrays.forEach((images) => this.loadImages(images));
   }
 
   /**
@@ -244,9 +344,9 @@ class Character extends MovableObject {
   calculateCenteredImageBounds(canvas, image) {
     const canvasRatio = canvas.width / canvas.height;
     const imageRatio = image.width / image.height;
-    
+
     let width, height;
-    
+
     if (imageRatio > canvasRatio) {
       width = canvas.width * Character.CANVAS_SCALE;
       height = width / imageRatio;
@@ -254,10 +354,10 @@ class Character extends MovableObject {
       height = canvas.height * Character.CANVAS_SCALE;
       width = height * imageRatio;
     }
-    
+
     const x = (canvas.width - width) / 2;
     const y = (canvas.height - height) / 2;
-    
+
     return { x, y, width, height };
   }
 
@@ -329,7 +429,9 @@ class Character extends MovableObject {
 
     if (this.world.keyboard.SPACE && !this.isAboveGround()) {
       this.jump();
-      this.jump_sound.play().catch(err => console.warn('Jump sound failed:', err));
+      this.jump_sound
+        .play()
+        .catch((err) => console.warn("Jump sound failed:", err));
       return true;
     }
     return isMoving;
@@ -364,12 +466,14 @@ class Character extends MovableObject {
     let wasHurt = false;
 
     this.idleInterval = setInterval(() => {
-      if (this.handleDeathAnimation() || 
-          this.handleHurtAnimation(() => wasHurt = true) || 
-          this.handleJumpingAnimation() || 
-          this.handleWalkingAnimation() || 
-          this.isThrowingBottle) {
-        if (!this.handleHurtAnimation(() => wasHurt = true)) {
+      if (
+        this.handleDeathAnimation() ||
+        this.handleHurtAnimation(() => (wasHurt = true)) ||
+        this.handleJumpingAnimation() ||
+        this.handleWalkingAnimation() ||
+        this.isThrowingBottle
+      ) {
+        if (!this.handleHurtAnimation(() => (wasHurt = true))) {
           wasHurt = false;
         }
         return;
@@ -393,7 +497,9 @@ class Character extends MovableObject {
       this.playAnimation(this.IMAGES_HURT);
       setHurtCallback();
       if (!this.hurt_sound_played) {
-        this.hurt_sound.play().catch(err => console.warn('Hurt sound failed:', err));
+        this.hurt_sound
+          .play()
+          .catch((err) => console.warn("Hurt sound failed:", err));
         this.hurt_sound_played = true;
       }
       return true;
@@ -435,7 +541,8 @@ class Character extends MovableObject {
 
   /**
    * Handles idle animations based on time since last movement.
-   * Switches between short and long idle animations.
+   * Switches between short and long idle animations when appropriate.
+   * Short idle starts after 500ms, long idle after 3000ms of inactivity.
    * @param {number} idleTime - Time in milliseconds since last movement
    */
   handleIdleAnimations(idleTime) {
@@ -553,7 +660,7 @@ class Character extends MovableObject {
    */
   triggerDeath() {
     if (this.isDying) return;
-    
+
     this.isDying = true;
     this.deathAnimationStarted = false;
     this.energy = Math.min(this.energy, 15);
@@ -572,8 +679,11 @@ class Character extends MovableObject {
   checkForDeath() {
     if (this.isDying) return;
 
-    const isDead = this.isDeadByEnergy() || this.isDeadByHealth() || this.isDeadByStatusBar();
-    
+    const isDead =
+      this.isDeadByEnergy() ||
+      this.isDeadByHealth() ||
+      this.isDeadByStatusBar();
+
     if (isDead) {
       this.triggerDeath();
     }
@@ -602,11 +712,13 @@ class Character extends MovableObject {
   isDeadByStatusBar() {
     const statusBar = this.world?.statusBar;
     const healthBar = this.world?.statusBarHealth;
-    
-    return (statusBar?.percentage <= 15) ||
-           (statusBar?.statusBarIndex <= 1) ||
-           (statusBar?.currentImageIndex <= 1) ||
-           (healthBar?.percentage <= 15);
+
+    return (
+      statusBar?.percentage <= 15 ||
+      statusBar?.statusBarIndex <= 1 ||
+      statusBar?.currentImageIndex <= 1 ||
+      healthBar?.percentage <= 15
+    );
   }
 
   /**
@@ -621,8 +733,18 @@ class Character extends MovableObject {
     const bounds = this.calculateCenteredImageBounds(canvas, this.victoryImage);
 
     this.showVictoryScreen = true;
-    this.animateScreen(() => this.showVictoryScreen, () => 
-      this.drawOverlay(ctx, canvas, this.victoryImage, bounds.x, bounds.y, bounds.width, bounds.height)
+    this.animateScreen(
+      () => this.showVictoryScreen,
+      () =>
+        this.drawOverlay(
+          ctx,
+          canvas,
+          this.victoryImage,
+          bounds.x,
+          bounds.y,
+          bounds.width,
+          bounds.height
+        )
     );
     this.scheduleVictoryScreenEnd();
   }
@@ -649,9 +771,9 @@ class Character extends MovableObject {
    */
   playDeathAnimation() {
     const deathAudio = new Audio("audio/death-scream.mp4");
-    deathAudio.play().catch(error => 
-      console.warn("Death sound playback failed:", error)
-    );
+    deathAudio
+      .play()
+      .catch((error) => console.warn("Death sound playback failed:", error));
 
     let currentFrame = 0;
     const animationInterval = setInterval(() => {
@@ -660,93 +782,34 @@ class Character extends MovableObject {
         currentFrame++;
       } else {
         clearInterval(animationInterval);
-        this.onDeathAnimationComplete();
-        this.showGameOverScreen();
+        this.gameOverHandler.world = this.world;
+        this.gameOverHandler.ctx = this.ctx || this.findCanvasContext();
+        this.gameOverHandler.canvas = this.canvas;
+        this.gameOverHandler.showGameOverScreen();
       }
     }, Character.DEATH_ANIMATION_FRAME_DURATION);
   }
 
   /**
-   * Called when death animation sequence is completed.
-   * Hook for additional death-related cleanup or events.
-   */
-  onDeathAnimationComplete() {
-    console.log("Death animation completed");
-  }
-
-  /**
-   * Displays the game over screen with overlay and automatic page reload.
-   * Loads game over image if not already loaded and handles display timing.
-   */
-  showGameOverScreen() {
-    if (!this.gameOverImage) {
-      this.loadGameOverImage();
-    }
-
-    const displayGameOver = () => {
-      const ctx = this.findCanvasContext();
-      if (!ctx || !this.gameOverImage) {
-        console.error("Canvas context or Game Over image not available");
-        return;
-      }
-
-      const canvas = ctx.canvas;
-      const bounds = this.calculateCenteredImageBounds(canvas, this.gameOverImage);
-      
-      this.showGameOverOverlay = true;
-      
-      this.animateScreen(() => this.showGameOverOverlay, () =>
-        this.drawOverlay(ctx, canvas, this.gameOverImage, bounds.x, bounds.y, bounds.width, bounds.height)
-      );
-
-      setTimeout(() => location.reload(), Character.GAME_OVER_DISPLAY_TIME);
-    };
-
-    if (this.gameOverImage?.complete) {
-      displayGameOver();
-    } else if (this.gameOverImage) {
-      this.gameOverImage.onload = displayGameOver;
-    }
-  }
-
-  /**
-   * Animates a screen overlay using requestAnimationFrame.
-   * Continues animation while condition function returns true.
-   * @param {Function} conditionFn - Function that returns true to continue animation
-   * @param {Function} drawFn - Function to draw the screen content
-   */
-  animateScreen(conditionFn, drawFn) {
-    const draw = () => {
-      if (conditionFn()) {
-        drawFn();
-        requestAnimationFrame(draw);
-      }
-    };
-    draw();
-  }
-
-  /**
-   * Loads the game over image with error handling.
-   * Sets up error callback for load failures.
-   */
-  loadGameOverImage() {
-    this.gameOverImage = new Image();
-    this.gameOverImage.src = "img/You won, you lost/Game Over.png";
-    this.gameOverImage.onerror = error => 
-      console.error("Failed to load Game Over image:", error);
-  }
-
-  /**
-   * Finds and returns available canvas 2D rendering context.
-   * Searches through multiple possible sources for the context.
-   * @returns {CanvasRenderingContext2D|null} The 2D rendering context or null if not found
+   * Finds the canvas context as fallback if not directly set
+   * @returns {CanvasRenderingContext2D|null} The canvas context or null if not found
    */
   findCanvasContext() {
     if (this.ctx) return this.ctx;
     if (this.world?.ctx) return this.world.ctx;
-    if (this.world?.canvas) return this.world.canvas.getContext('2d');
-    
-    const canvas = document.querySelector('canvas');
-    return canvas?.getContext('2d') || null;
+    if (this.world?.canvas) return this.world.canvas.getContext("2d");
+    const canvas = document.querySelector("canvas");
+    return canvas?.getContext("2d") || null;
+  }
+
+  /**
+   * Sets the canvas context and passes it to game over handler
+   * @param {CanvasRenderingContext2D} ctx - The 2D rendering context
+   */
+  setCanvasContext(ctx) {
+    this.ctx = ctx;
+    this.canvas = ctx.canvas;
+    this.gameOverHandler.ctx = ctx;
+    this.gameOverHandler.canvas = ctx.canvas;
   }
 }

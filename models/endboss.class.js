@@ -146,7 +146,9 @@ class Endboss extends MovableObject {
     this.maxEnergy = 100;
     this.energy = this.maxEnergy;
     this.isDead = false;
-
+    if (this.endboss) {
+      this.endboss.worldReference = this;
+    }
     this.loadImage(this.IMAGES_ALERT[0]);
     this.loadImages(this.IMAGES_ALERT);
     this.loadImages(this.IMAGES_WALK);
@@ -413,16 +415,20 @@ class Endboss extends MovableObject {
    * Plays the death animation and handles victory sequence
    */
   playDeathAnimation() {
-    this.victorySound.play().catch(e => console.warn("Sieges-Sound konnte nicht abgespielt werden:", e));
-    
+    this.victorySound
+      .play()
+      .catch((e) =>
+        console.warn("Sieges-Sound konnte nicht abgespielt werden:", e)
+      );
+
     this.playAnimation(this.IMAGES_DEAD);
 
     setTimeout(() => {
-        clearInterval(this.animationInterval);
-        cancelAnimationFrame(this.movementAnimationId);
-        this.shouldBeRemoved = true;
-        this.showVictoryScreen = true;
-        this.displayVictoryScreen();
+      clearInterval(this.animationInterval);
+      cancelAnimationFrame(this.movementAnimationId);
+      this.shouldBeRemoved = true;
+      this.showVictoryScreen = true;
+      this.displayVictoryScreen();
     }, this.IMAGES_DEAD.length * 200);
   }
 
@@ -517,6 +523,10 @@ class Endboss extends MovableObject {
     this.notifyWorld();
     this.playHurtSound();
     this.evaluateDeathOrHurt();
+
+    if (this.worldReference?.statusBarEndboss) {
+      this.worldReference.statusBarEndboss.setPercentage(this.energy);
+    }
   }
 
   /**
@@ -559,7 +569,11 @@ class Endboss extends MovableObject {
     const hurtSound = new Audio("audio/hurt-endboss.mp4");
     hurtSound.volume = 0.6;
     hurtSound.currentTime = 0;
-    hurtSound.play().catch(e => console.warn("Endboss-Hurt-Sound konnte nicht abgespielt werden:", e));
+    hurtSound
+      .play()
+      .catch((e) =>
+        console.warn("Endboss-Hurt-Sound konnte nicht abgespielt werden:", e)
+      );
   }
 
   /**

@@ -96,3 +96,5 @@ const coins = createCoins(20); // 20 Münzen erzeugen
  * @type {Level}
  */
 const level1 = new Level(chickens, clouds, backgroundObjects, coins, []);
+
+

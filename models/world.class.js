@@ -54,12 +54,13 @@ class World {
     this.level = level1;
     this.setWorld();
     this.bottleBar.setPercentage(0);
-    this.endboss = this.level.endboss;
-    this.createEndbossStatusBar();
 
-    if (this.endboss) {
-      this.endboss.worldReference = this;
-    }
+    this.endboss = this.level.enemies.find(
+      (enemy) => enemy.constructor.name === "Endboss"
+    );
+
+    this.createEndbossStatusBar();
+    this.setupEndbossReference();
 
     this.draw();
     this.run();
@@ -79,7 +80,7 @@ class World {
   run() {
     this.intervals.checkEnemyCollisions = setInterval(() => {
       this.checkEnemyCollisions();
-    }, 1000 / 144);
+    }, 1000 / 200);
 
     this.intervals.gameLogic = setInterval(() => {
       this.checkThrowObjects();
@@ -93,7 +94,11 @@ class World {
    * Creates the endboss status bar at the top right of the screen
    */
   createEndbossStatusBar() {
-    this.endbossStatusBar = new StatusBar("endboss", this.canvas.width - 220, 10);
+    this.endbossStatusBar = new StatusBar(
+      "endboss",
+      this.canvas.width - 220,
+      10
+    );
     this.endbossStatusBar.setPercentage(100);
   }
 
@@ -140,14 +145,14 @@ class World {
   }
 
   /**
-   * Updates camera position based on character or endboss position
+   * Updates the camera position to follow the character.
+   * The camera is centered horizontally on the character with an offset of 100px
+   * to keep the character slightly left of center for better visibility ahead.
+   * This provides consistent camera behavior regardless of endboss activation.
    */
   updateCamera() {
-    this.camera_x = this.endbossActivated
-      ? -this.endboss.x + 400
-      : -this.character.x + 100;
+    this.camera_x = -this.character.x + 100;
   }
-
   /**
    * Updates all game objects that need per-frame updates
    */
@@ -167,10 +172,10 @@ class World {
     this.addObjectsToMap(this.level.coins);
     this.addObjectsToMap(this.level.bottles);
     this.addObjectsToMap(this.level.enemies);
-    
+
     this.addToMap(this.character);
     if (this.endboss) this.addToMap(this.endboss);
-    
+
     this.addObjectsToMap(this.throwableObjects);
 
     this.ctx.restore();
@@ -184,6 +189,25 @@ class World {
     this.bottleBar.draw(this.ctx);
     this.coinBar.draw(this.ctx);
     this.endbossStatusBar.draw(this.ctx);
+  }
+
+  /**
+   * Registers a hit on the endboss and updates its status bar
+   * @param {number} energy The remaining energy percentage of the endboss
+   */
+  registerEndbossHit(energy) {
+    console.log(`Endboss hit! Energy: ${energy}%`); // Debug-Log hinzufügen
+
+    if (this.endbossStatusBar && this.endbossActivated) {
+      this.endbossStatusBar.setPercentage(energy);
+      console.log(`Endboss statusbar updated to ${energy}%`); // Debug-Log
+    } else {
+      console.log(
+        "Endboss statusbar not updated - statusbar or activation missing"
+      );
+    }
+
+    this.endbossHitCount++;
   }
 
   /**
@@ -218,7 +242,8 @@ class World {
     const maxTolerance = 30;
     const isAbove = charBox.y < enemyBox.y;
     const isFalling = fallingSpeed < 0;
-    const isSmallOverlap = verticalDistance < maxTolerance && verticalDistance > 0;
+    const isSmallOverlap =
+      verticalDistance < maxTolerance && verticalDistance > 0;
 
     if (isAbove && isFalling && isSmallOverlap) {
       enemy.hit();
@@ -272,7 +297,10 @@ class World {
     this.character.collectedBottles--;
     this.lastBottleThrow = Date.now();
     this.bottleBar.setPercentage(
-      Math.min(100, (this.character.collectedBottles / this.character.maxBottles) * 100)
+      Math.min(
+        100,
+        (this.character.collectedBottles / this.character.maxBottles) * 100
+      )
     );
   }
 
@@ -341,14 +369,25 @@ class World {
    * Checks for bottle pickups by character
    */
   checkBottlePickups() {
-    this.checkPickups(this.level.bottles, "collectedBottles", "maxBottles", this.bottleBar);
+    this.checkPickups(
+      this.level.bottles,
+      "collectedBottles",
+      "maxBottles",
+      this.bottleBar
+    );
   }
 
   /**
    * Checks for coin pickups by character
    */
   checkCoinPickups() {
-    this.checkPickups(this.level.coins, "collectedCoins", "maxCoins", this.coinBar, "audio/collectcoin.mp4");
+    this.checkPickups(
+      this.level.coins,
+      "collectedCoins",
+      "maxCoins",
+      this.coinBar,
+      "audio/collectcoin.mp4"
+    );
   }
 
   /**
@@ -392,7 +431,8 @@ class World {
     this.ctx.save();
 
     if (mo.otherDirection) {
-      const flipX = mo.constructor.name === "Endboss" || mo === this.endboss ? 1 : -1;
+      const flipX =
+        mo.constructor.name === "Endboss" || mo === this.endboss ? 1 : -1;
       this.ctx.translate(mo.x + mo.width / 2, 0);
       this.ctx.scale(flipX, 1);
       this.ctx.translate(-(mo.x + mo.width / 2), 0);
@@ -402,5 +442,68 @@ class World {
     if (this.DEBUG_MODE) mo.drawFrame(this.ctx);
 
     this.ctx.restore();
+  }
+
+  /**
+   * Separate Methode für Endboss worldReference Setup
+   */
+  setupEndbossReference() {
+    if (this.endboss) {
+      console.log("Setting worldReference for endboss");
+      this.endboss.worldReference = this;
+
+      // Debug: Sofortiger Test
+      setTimeout(() => {
+        if (this.endboss.worldReference) {
+          console.log("✓ worldReference successfully set");
+        } else {
+          console.log("✗ worldReference lost!");
+        }
+      }, 100);
+    } else {
+      console.log("No endboss found in level");
+    }
+  }
+
+  /**
+   * Aktiviert den Endboss - erweitert mit worldReference check
+   */
+  updateEndbossActivation() {
+    if (this.endboss && this.character.x > 3000 && !this.endbossActivated) {
+      this.endbossActivated = true;
+      console.log("Endboss activated!");
+
+      // Sicherstellung dass worldReference noch gesetzt ist
+      if (!this.endboss.worldReference) {
+        console.log("Re-setting worldReference during activation");
+        this.endboss.worldReference = this;
+      }
+    }
+  }
+
+  /**
+   * Alternative: Direkter Aufruf statt über endboss.hit()
+   * Verwende das als Backup-Lösung
+   */
+  checkCollisionsWithEndboss() {
+    if (!this.endboss || this.endboss.isDead) return;
+
+    this.throwableObjects.forEach((bottle) => {
+      if (!bottle.isSplashing && bottle.isColliding(this.endboss)) {
+        bottle.splash("endboss");
+
+        // Endboss Energie direkt reduzieren
+        this.endboss.energy -= 20;
+        console.log(`Direct hit! Endboss energy: ${this.endboss.energy}`);
+
+        // Direkt registerEndbossHit aufrufen
+        this.registerEndbossHit(this.endboss.energy);
+
+        // Falls Endboss tot ist
+        if (this.endboss.energy <= 0) {
+          this.endboss.isDead = true;
+        }
+      }
+    });
   }
 }
