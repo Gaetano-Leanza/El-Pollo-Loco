@@ -36,7 +36,8 @@ class World {
     if (this.endboss) {
       this.endboss.worldReference = this;
     }
-
+    this.isGameOver = false;
+    this.gameOverImage = null;
     this.draw();
     this.run();
   }

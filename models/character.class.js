@@ -16,7 +16,9 @@ class Character extends MovableObject {
   isDying = false;
   deathAnimationStarted = false;
   world;
-  walking_sound = new Audio("");
+  ctx;
+  canvas;
+
   hurt_sound = new Audio("audio/hurt-character.mp4");
   jump_sound = new Audio("audio/jump.mp4");
   death_sound = new Audio("audio/death.mp4");
@@ -84,7 +86,7 @@ class Character extends MovableObject {
     "../img/2_character_pepe/1_idle/long_idle/I-20.png",
   ];
 
-  constructor() {
+    constructor() {
     super();
     this.loadImage("../img/2_character_pepe/2_walk/W-21.png");
     this.loadImages(this.IMAGES_WALKING);
@@ -95,6 +97,35 @@ class Character extends MovableObject {
     this.loadImages(this.IMAGES_LONG_IDLE);
     this.loadGameOverImage();
     this.applyGravity();
+  }
+
+  setCanvasContext(ctx) {
+    this.ctx = ctx;
+    this.canvas = ctx.canvas;
+  }
+
+  calculateCenteredImageBounds(canvas, image) {
+    const maxWidth = canvas.width * 0.8;
+    const maxHeight = canvas.height * 0.8;
+
+    const scale = Math.min(
+      maxWidth / image.width,
+      maxHeight / image.height,
+      1
+    );
+
+    const width = image.width * scale;
+    const height = image.height * scale;
+    const x = (canvas.width - width) / 2;
+    const y = (canvas.height - height) / 2;
+
+    return { x, y, width, height };
+  }
+
+  drawGameOverOverlay(ctx, canvas, x, y, width, height) {
+    ctx.fillStyle = "rgba(0, 0, 0, 0.7)";
+    ctx.fillRect(0, 0, canvas.width, canvas.height);
+    ctx.drawImage(this.gameOverImage, x, y, width, height);
   }
 
   getHitbox() {
@@ -137,11 +168,7 @@ class Character extends MovableObject {
     return isMoving;
   }
 
-  handleWalkingSound(isMoving) {
-    if (!isMoving || this.isDying) {
-      this.walking_sound.pause();
-    }
-  }
+
 
   updateLastMoveTime(isMoving) {
     if (isMoving && !this.isDying) {
@@ -243,7 +270,6 @@ class Character extends MovableObject {
 
       let isMoving = this.handleMovement();
       this.handleJumping(isMoving);
-      this.handleWalkingSound(isMoving);
       this.updateLastMoveTime(isMoving);
       this.updateCamera();
     }, 1000 / 60);
@@ -256,7 +282,7 @@ class Character extends MovableObject {
 
     const bottle = this.createThrowableBottle();
     this.addBottleToWorld(bottle);
-    this.collectedBottles--; // Direkt hier statt eigene Methode
+    this.collectedBottles--; 
     this.resetIdleTimer();
     this.markAsThrowingTemporarily();
   }
@@ -299,90 +325,168 @@ class Character extends MovableObject {
       if (this.health !== undefined) this.health = Math.min(this.health, 15);
 
       this.walking_sound.pause();
-
       this.speed = 0;
       this.acceleration = 0;
       this.handleDeathAnimation();
     }
   }
+checkForDeath() {
+  if (this.isDying) return;
 
-  checkForDeath() {
-    if (this.isDying) return;
+  const energyDead = this.energy !== undefined && this.energy <= 15;
+  const healthDead = this.health !== undefined && this.health <= 15;
+  const statusBarDead =
+    this.world?.statusBar?.percentage <= 15 ||
+    this.world?.statusBar?.statusBarIndex <= 1 ||
+    this.world?.statusBar?.currentImageIndex <= 1 ||
+    this.world?.statusBarHealth?.percentage <= 15;
 
-    const energyDead = this.energy !== undefined && this.energy <= 15;
-    const healthDead = this.health !== undefined && this.health <= 15;
-    const statusBarDead =
-      this.world?.statusBar?.percentage <= 15 ||
-      this.world?.statusBar?.statusBarIndex <= 1 ||
-      this.world?.statusBar?.currentImageIndex <= 1 ||
-      this.world?.statusBarHealth?.percentage <= 15;
+  if (energyDead || healthDead || statusBarDead) {
+    this.triggerDeath();
+  }
+}
 
-    if (energyDead || healthDead || statusBarDead) {
-      console.log("💀 Death detected at 15% health:", {
-        energy: this.energy,
-        health: this.health,
-        statusBar: statusBarDead,
-      });
-      this.triggerDeath();
+displayVictoryScreen() {
+  const ctx = this.findCanvasContext();
+  if (!this.victoryImage || !ctx) return;
+
+  const canvas = ctx.canvas;
+  const { x, y, width, height } = this.calculateCenteredImageBounds(canvas, this.victoryImage);
+
+  const draw = () => this.drawVictoryOverlay(ctx, canvas, x, y, width, height);
+
+  const loop = () => {
+    if (this.showVictoryScreen) {
+      draw();
+      requestAnimationFrame(loop);
     }
-  }
+  };
 
-  handleDeathAnimation() {
-    if (this.isDead() || this.isDying) {
-      if (!this.deathAnimationStarted) {
-        this.deathAnimationStarted = true;
-        this.playDeathAnimation();
-      }
-      return true;
+  loop();
+  this.scheduleVictoryScreenEnd();
+}
+
+drawVictoryOverlay(ctx, canvas, x, y, width, height) {
+  ctx.fillStyle = "rgba(0, 0, 0, 0.7)";
+  ctx.fillRect(0, 0, canvas.width, canvas.height);
+  ctx.drawImage(this.victoryImage, x, y, width, height);
+}
+
+drawGameOverOverlay(ctx, canvas, x, y, width, height) {
+  ctx.fillStyle = "rgba(0, 0, 0, 0.7)";
+  ctx.fillRect(0, 0, canvas.width, canvas.width);
+  ctx.drawImage(this.gameOverImage, x, y, width, height);
+}
+
+handleDeathAnimation() {
+  if (this.isDead() || this.isDying) {
+    if (!this.deathAnimationStarted) {
+      this.deathAnimationStarted = true;
+      this.playDeathAnimation();
     }
-    return false;
+    return true;
   }
+  return false;
+}
 
-  playDeathAnimation() {
-    const deathAudio = new Audio("audio/death-scream.mp4");
-    deathAudio.play().catch((error) => {
-      console.error("⚠️ Fehler beim Abspielen des Death-Sounds:", error);
-    });
+playDeathAnimation() {
+  const deathAudio = new Audio("audio/death-scream.mp4");
+  deathAudio.play().catch((error) => {
+    console.error("⚠️ Fehler beim Abspielen des Death-Sounds:", error);
+  });
 
-    let currentFrame = 0;
-    const animationInterval = setInterval(() => {
-      if (currentFrame < this.IMAGES_DEAD.length) {
-        this.img = this.imageCache[this.IMAGES_DEAD[currentFrame]];
-        currentFrame++;
-      } else {
-        clearInterval(animationInterval);
-        this.onDeathAnimationComplete();
-
-        // Game Over Bild vorbereiten und anzeigen
-        this.gameOverImage = new Image();
-        this.gameOverImage.src = "img/You won, you lost/Game Over.png";
-        this.gameOverImage.onload = () => {
-          // Sobald Bild geladen ist, zeichnen
-          this.ctx.drawImage(
-            this.gameOverImage,
-            0,
-            0,
-            this.canvas.width,
-            this.canvas.height
-          );
-        };
-
-        // Nach 2 Sekunden Seite neu laden
-        setTimeout(() => {
-          location.reload();
-        }, 2000);
-      }
-    }, 150);
-  }
-
-  onDeathAnimationComplete() {
-    setTimeout(() => {
+  let currentFrame = 0;
+  const animationInterval = setInterval(() => {
+    if (currentFrame < this.IMAGES_DEAD.length) {
+      this.img = this.imageCache[this.IMAGES_DEAD[currentFrame]];
+      currentFrame++;
+    } else {
+      clearInterval(animationInterval);
+      this.onDeathAnimationComplete();
+      
       this.showGameOverScreen();
-    }, 500);
+    }
+  }, 150);
+}
+
+onDeathAnimationComplete() {
+  console.log("Death animation completed");
+}
+
+showGameOverScreen() {
+  if (!this.gameOverImage) {
+    this.loadGameOverImage();
   }
 
-  loadGameOverImage() {
-    this.gameOverImage = new Image();
-    this.gameOverImage.src = "img/You won, you lost/Game Over.png";
+  const displayGameOver = () => {
+    const ctx = this.findCanvasContext();
+    if (!ctx || !this.gameOverImage) {
+      console.error("⚠️ Canvas Context oder Game Over Image nicht verfügbar");
+      return;
+    }
+
+    const canvas = ctx.canvas;
+    const { x, y, width, height } = this.calculateCenteredImageBounds(canvas, this.gameOverImage);
+    
+    this.showGameOverOverlay = true;
+    
+    const draw = () => {
+      if (this.showGameOverOverlay) {
+        this.drawGameOverOverlay(ctx, canvas, x, y, width, height);
+        requestAnimationFrame(draw);
+      }
+    };
+    
+    draw();
+
+    setTimeout(() => {
+      location.reload();
+    }, 3000);
+  };
+
+  if (this.gameOverImage && this.gameOverImage.complete) {
+    displayGameOver();
+  } else if (this.gameOverImage) {
+    this.gameOverImage.onload = displayGameOver;
   }
+}
+
+loadGameOverImage() {
+  this.gameOverImage = new Image();
+  this.gameOverImage.src = "img/You won, you lost/Game Over.png";
+  
+  this.gameOverImage.onerror = (error) => {
+    console.error("⚠️ Fehler beim Laden des Game Over Bildes:", error);
+  };
+}
+
+findCanvasContext() {
+  if (this.ctx) return this.ctx;
+  
+  if (this.world?.ctx) return this.world.ctx;
+  if (this.world?.canvas) return this.world.canvas.getContext('2d');
+  
+  const canvas = document.querySelector('canvas');
+  return canvas ? canvas.getContext('2d') : null;
+}
+
+calculateCenteredImageBounds(canvas, image) {
+  const canvasRatio = canvas.width / canvas.height;
+  const imageRatio = image.width / image.height;
+  
+  let width, height, x, y;
+  
+  if (imageRatio > canvasRatio) {
+    width = canvas.width * 0.8; 
+    height = width / imageRatio;
+  } else {
+    height = canvas.height * 0.8; 
+    width = height * imageRatio;
+  }
+  
+  x = (canvas.width - width) / 2;
+  y = (canvas.height - height) / 2;
+  
+  return { x, y, width, height };
+}
 }
