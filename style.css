@@ -49,20 +49,20 @@ canvas {
   margin: 0 auto;
 }
 
-  #rotate-warning {
-    display: none;
-    position: fixed;
-    inset: 0;
-    background-color: #111;
-    color: #fff;
-    font-family: sans-serif;
-    font-size: 18px;
-    z-index: 9999;
-    align-items: center;
-    justify-content: center;
-    text-align: center;
-    padding: 20px;
-  }
+#rotate-warning {
+  display: none;
+  position: fixed;
+  inset: 0;
+  background-color: #111;
+  color: #fff;
+  font-family: sans-serif;
+  font-size: 18px;
+  z-index: 9999;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  padding: 20px;
+}
 
 #startButton {
   background-color: #ffcc00;
@@ -87,6 +87,30 @@ canvas {
   transform: translateY(4px);
 }
 
+.footer-link {
+  position: fixed;
+  bottom: 10px;
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 50;
+  font-family: Arial, sans-serif;
+  font-size: 14px;
+}
+
+.footer-link a {
+  color: white;
+  text-decoration: none;
+  background-color: rgba(0, 0, 0, 0.5);
+  padding: 6px 12px;
+  border-radius: 8px;
+  transition: background-color 0.2s ease-in-out;
+}
+
+.footer-link a:hover {
+  background-color: rgba(255, 255, 255, 0.8);
+  color: black;
+}
+
 @keyframes coin-blink {
   0% {
     opacity: 1;
@@ -105,22 +129,23 @@ canvas {
   transition: opacity 0.3s ease, transform 0.3s ease;
 }
 
-@media only screen and (max-width: 950px) {
-  .title,
-  .controls {
-    display: none;
+/* Nur auf Geräten mit Touch UND im Hochformat anzeigen */
+@media (pointer: coarse) and (orientation: portrait) {
+  #rotate-warning {
+    display: flex;
   }
 
-  html,
-  body {
-    background-color: rgb(245, 149, 5);
-    background-image: none;
-    height: 100dvh;
-    width: 100vw;
-    overflow: hidden;
-    position: fixed;
-    margin: 0;
-    padding: 0;
+  canvas,
+  .mobile-controls,
+  .game-container {
+    display: none !important;
+  }
+}
+
+/* Ergänzung: Touch-Only Darstellung für mobile-controls */
+@media (pointer: coarse) {
+  .mobile-controls {
+    display: flex !important;
   }
 
   canvas {
@@ -167,27 +192,15 @@ canvas {
     cursor: pointer;
     user-select: none;
   }
-
-
 }
 
-/* Nur auf Geräten mit Touch UND im Hochformat anzeigen */
-@media (pointer: coarse) and (orientation: portrait) {
-  #rotate-warning {
-    display: flex;
-  }
-
-  canvas,
-  .mobile-controls,
-  .game-container {
-    display: none !important;
-  }
-}
-
-/* Ergänzung: Touch-Only Darstellung für mobile-controls */
 @media (pointer: coarse) {
-  .mobile-controls {
-    display: flex !important;
+  #startButton {
+    position: fixed;
+    bottom: 30px;
+    left: 50%;
+    transform: translateX(-50%);
+    z-index: 101;
   }
 }
 
