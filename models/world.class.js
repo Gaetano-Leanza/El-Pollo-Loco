@@ -17,8 +17,6 @@ class World {
   endbossHitCount = 0;
   currentState = "alert";
   isGameOver = false;
-
-  // Intervall-IDs speichern
   intervals = {};
 
   constructor(canvas, keyboard) {
@@ -39,7 +37,6 @@ class World {
       this.endboss.worldReference = this;
     }
 
-    // Game Loop starten
     this.draw();
     this.run();
   }
@@ -50,7 +47,6 @@ class World {
   }
 
   run() {
-    // Intervall speichern, um ihn später stoppen zu können
     this.intervals.checkEnemyCollisions = setInterval(() => {
       this.checkEnemyCollisions();
     }, 1000 / 144);
@@ -72,7 +68,6 @@ class World {
 
   registerEndbossHit(energy) {
     if (this.endbossStatusBar) {
-      // energy ist bereits Prozentwert
       this.endbossStatusBar.setPercentage(energy);
     }
     this.endbossHitCount++;
@@ -170,7 +165,8 @@ class World {
     const maxTolerance = 30;
     const isAbove = charBox.y < enemyBox.y;
     const isFalling = fallingSpeed < 0;
-    const isSmallOverlap = verticalDistance < maxTolerance && verticalDistance > 0;
+    const isSmallOverlap =
+      verticalDistance < maxTolerance && verticalDistance > 0;
 
     if (isAbove && isFalling && isSmallOverlap) {
       enemy.hit();
@@ -188,7 +184,9 @@ class World {
   }
 
   removeDeadEnemies() {
-    this.level.enemies = this.level.enemies.filter((enemy) => !enemy.shouldBeRemoved);
+    this.level.enemies = this.level.enemies.filter(
+      (enemy) => !enemy.shouldBeRemoved
+    );
     if (this.endboss && this.endboss.isDead) {
       this.endboss = null;
     }
@@ -260,7 +258,9 @@ class World {
   }
 
   removeUsedProjectiles() {
-    this.throwableObjects = this.throwableObjects.filter((bottle) => !bottle.shouldBeRemoved);
+    this.throwableObjects = this.throwableObjects.filter(
+      (bottle) => !bottle.shouldBeRemoved
+    );
   }
 
   checkItemPickups() {
@@ -329,48 +329,5 @@ class World {
     }
 
     this.ctx.restore();
-  }
-
-  clearAllIntervals() {
-    // Alle gespeicherten Intervalle stoppen
-    for (const key in this.intervals) {
-      clearInterval(this.intervals[key]);
-    }
-    this.intervals = {};
-
-    // Falls Character und andere Objekte Intervalle haben
-    if (this.character?.clearAllIntervals) this.character.clearAllIntervals();
-
-    if (this.level?.enemies) {
-      this.level.enemies.forEach((enemy) => enemy.clearAllIntervals?.());
-    }
-
-    if (this.throwableObjects) {
-      this.throwableObjects.forEach((obj) => obj.clearAllIntervals?.());
-    }
-
-    console.log("Alle Intervalle wurden gestoppt");
-  }
-
-  restartGame() {
-    this.clearAllIntervals();
-
-    this.isGameOver = false;
-    this.camera_x = 0;
-
-    // Alle relevanten Werte zurücksetzen
-    this.character = new Character();
-    this.character.world = this;
-    this.level = level1;
-    this.bottleBar.setPercentage(0);
-    this.coinBar.setPercentage(0);
-    this.statusBar.setPercentage(100);
-    this.endbossActivated = false;
-    this.endboss = this.level.endboss;
-    this.createEndbossStatusBar();
-
-    // Game Loop starten
-    this.draw();
-    this.run();
   }
 }

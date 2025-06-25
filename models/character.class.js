@@ -338,37 +338,42 @@ class Character extends MovableObject {
     return false;
   }
 
- playDeathAnimation() {
-  const deathAudio = new Audio("audio/death-scream.mp4");
-  deathAudio.play().catch((error) => {
-    console.error("⚠️ Fehler beim Abspielen des Death-Sounds:", error);
-  });
+  playDeathAnimation() {
+    const deathAudio = new Audio("audio/death-scream.mp4");
+    deathAudio.play().catch((error) => {
+      console.error("⚠️ Fehler beim Abspielen des Death-Sounds:", error);
+    });
 
-  let currentFrame = 0;
-  const animationInterval = setInterval(() => {
-    if (currentFrame < this.IMAGES_DEAD.length) {
-      this.img = this.imageCache[this.IMAGES_DEAD[currentFrame]];
-      currentFrame++;
-    } else {
-      clearInterval(animationInterval);
-      this.onDeathAnimationComplete();
+    let currentFrame = 0;
+    const animationInterval = setInterval(() => {
+      if (currentFrame < this.IMAGES_DEAD.length) {
+        this.img = this.imageCache[this.IMAGES_DEAD[currentFrame]];
+        currentFrame++;
+      } else {
+        clearInterval(animationInterval);
+        this.onDeathAnimationComplete();
 
-      // Game Over Bild vorbereiten und anzeigen
-      this.gameOverImage = new Image();
-      this.gameOverImage.src = "img/You won, you lost/Game Over.png";
-      this.gameOverImage.onload = () => {
-        // Sobald Bild geladen ist, zeichnen
-        this.ctx.drawImage(this.gameOverImage, 0, 0, this.canvas.width, this.canvas.height);
-      };
+        // Game Over Bild vorbereiten und anzeigen
+        this.gameOverImage = new Image();
+        this.gameOverImage.src = "img/You won, you lost/Game Over.png";
+        this.gameOverImage.onload = () => {
+          // Sobald Bild geladen ist, zeichnen
+          this.ctx.drawImage(
+            this.gameOverImage,
+            0,
+            0,
+            this.canvas.width,
+            this.canvas.height
+          );
+        };
 
-      // Nach 2 Sekunden Seite neu laden
-      setTimeout(() => {
-        location.reload();
-      }, 2000);
-    }
-  }, 150);
-}
-
+        // Nach 2 Sekunden Seite neu laden
+        setTimeout(() => {
+          location.reload();
+        }, 2000);
+      }
+    }, 150);
+  }
 
   onDeathAnimationComplete() {
     setTimeout(() => {
@@ -376,79 +381,8 @@ class Character extends MovableObject {
     }, 500);
   }
 
-  cleanup() {
-  // Stop character intervals
-  if (this.idleInterval) {
-    clearInterval(this.idleInterval);
-    this.idleInterval = null;
-  }
-
-  // Stop world intervals
-  if (this.world?.gameOverInterval) {
-    clearInterval(this.world.gameOverInterval);
-    this.world.gameOverInterval = null;
-  }
-
-  if (this.world?.drawInterval) {
-    clearInterval(this.world.drawInterval);
-    this.world.drawInterval = null;
-  }
-
-  // Stop audio
-  this.walking_sound.pause();
-  this.hurt_sound.pause();
-  this.jump_sound.pause();
-  this.death_sound.pause();
-
-  // Remove event listeners
-  if (this.gameOverControlsRegistered) {
-    // Store the handler to remove it specifically
-    document.removeEventListener("keydown", this.handleRestart);
-    this.gameOverControlsRegistered = false;
-  }
-}
-
   loadGameOverImage() {
     this.gameOverImage = new Image();
     this.gameOverImage.src = "img/You won, you lost/Game Over.png";
   }
-
-  
-
-
-cleanup() {
-  // Stop character intervals
-  if (this.idleInterval) {
-    clearInterval(this.idleInterval);
-    this.idleInterval = null;
-  }
-
-  // Stop world intervals
-  if (this.world?.gameOverInterval) {
-    clearInterval(this.world.gameOverInterval);
-    this.world.gameOverInterval = null;
-  }
-
-  if (this.world?.drawInterval) {
-    clearInterval(this.world.drawInterval);
-    this.world.drawInterval = null;
-  }
-
-  // Stop audio
-  this.walking_sound.pause();
-  this.hurt_sound.pause();
-  this.jump_sound.pause();
-  this.death_sound.pause();
-
-  // Remove event listeners
-  if (this.gameOverControlsRegistered) {
-    // Store the handler to remove it specifically
-    document.removeEventListener("keydown", this.handleRestart);
-    this.gameOverControlsRegistered = false;
-  }
-}
-
-
-
-
 }

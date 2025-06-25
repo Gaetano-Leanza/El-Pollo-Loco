@@ -13,7 +13,6 @@ class SoundManager {
    */
   static enable() {
     this.enabled = true;
-    console.log("Sounds aktiviert!");
   }
 }
 
