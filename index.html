@@ -52,7 +52,15 @@
       <canvas id="canvas" width="720" height="480"></canvas>
 
       <!-- Startbutton -->
-      <button id="startButton" onclick="startGame()">Starte Spiel</button>
+      <div class="button-container">
+        <button id="startButton" onclick="startGame()">Starte Spiel</button>
+        <button
+          id="gamerulesButton"
+          onclick="window.location.href='gameRules.html'"
+        >
+          Spielregeln
+        </button>
+      </div>
 
       <!-- Steuerungsanzeige (wird erst später eingeblendet) -->
       <img

@@ -43,6 +43,7 @@ function drawStartImage(ctx) {
  */
 function startGame() {
   document.getElementById("startButton").style.display = "none";
+  document.getElementById("gamerulesButton").style.display = "none";
   document.getElementById("controlsImage").style.display = "block";
   init();
 }
@@ -75,13 +76,27 @@ function initKeyboardListeners() {
  */
 function handleKeyDown(e) {
   switch (e.keyCode) {
-    case 39: keyboard.RIGHT = true; break;
-    case 37: keyboard.LEFT = true; break;
-    case 38: keyboard.UP = true; break;
-    case 40: keyboard.DOWN = true; break;
-    case 32: keyboard.SPACE = true; break;
-    case 68: keyboard.D = true; break;
-    case 70: toggleFullscreen(canvas); break;
+    case 39:
+      keyboard.RIGHT = true;
+      break;
+    case 37:
+      keyboard.LEFT = true;
+      break;
+    case 38:
+      keyboard.UP = true;
+      break;
+    case 40:
+      keyboard.DOWN = true;
+      break;
+    case 32:
+      keyboard.SPACE = true;
+      break;
+    case 68:
+      keyboard.D = true;
+      break;
+    case 70:
+      toggleFullscreen(canvas);
+      break;
   }
 }
 
@@ -91,12 +106,24 @@ function handleKeyDown(e) {
  */
 function handleKeyUp(e) {
   switch (e.keyCode) {
-    case 39: keyboard.RIGHT = false; break;
-    case 37: keyboard.LEFT = false; break;
-    case 38: keyboard.UP = false; break;
-    case 40: keyboard.DOWN = false; break;
-    case 32: keyboard.SPACE = false; break;
-    case 68: keyboard.D = false; break;
+    case 39:
+      keyboard.RIGHT = false;
+      break;
+    case 37:
+      keyboard.LEFT = false;
+      break;
+    case 38:
+      keyboard.UP = false;
+      break;
+    case 40:
+      keyboard.DOWN = false;
+      break;
+    case 32:
+      keyboard.SPACE = false;
+      break;
+    case 68:
+      keyboard.D = false;
+      break;
   }
 }
 
@@ -106,9 +133,11 @@ function handleKeyUp(e) {
  */
 function toggleFullscreen(element) {
   if (!document.fullscreenElement) {
-    element.requestFullscreen().catch(err =>
-      alert(`Vollbildmodus konnte nicht aktiviert werden: ${err.message}`)
-    );
+    element
+      .requestFullscreen()
+      .catch((err) =>
+        alert(`Vollbildmodus konnte nicht aktiviert werden: ${err.message}`)
+      );
   } else {
     document.exitFullscreen();
   }
@@ -128,10 +157,10 @@ function initTouchControls() {
  * @returns {Object|null} Ein Objekt mit Buttons für LEFT, RIGHT, SPACE, D oder null bei Fehler.
  */
 function getTouchButtons() {
-  const leftBtn = document.getElementById('leftBtn');
-  const rightBtn = document.getElementById('rightBtn');
-  const jumpBtn = document.getElementById('jumpBtn');
-  const throwBtn = document.getElementById('throwBtn');
+  const leftBtn = document.getElementById("leftBtn");
+  const rightBtn = document.getElementById("rightBtn");
+  const jumpBtn = document.getElementById("jumpBtn");
+  const throwBtn = document.getElementById("throwBtn");
 
   if (!(leftBtn && rightBtn && jumpBtn && throwBtn)) {
     console.warn("Touch-Buttons nicht gefunden");
@@ -142,7 +171,7 @@ function getTouchButtons() {
     LEFT: leftBtn,
     RIGHT: rightBtn,
     SPACE: jumpBtn,
-    D: throwBtn
+    D: throwBtn,
   };
 }
 
@@ -152,12 +181,12 @@ function getTouchButtons() {
  */
 function addTouchEventListeners(buttons) {
   Object.entries(buttons).forEach(([key, btn]) => {
-    btn.addEventListener('touchstart', (e) => {
+    btn.addEventListener("touchstart", (e) => {
       e.preventDefault();
       keyboard[key] = true;
     });
 
-    btn.addEventListener('touchend', (e) => {
+    btn.addEventListener("touchend", (e) => {
       e.preventDefault();
       keyboard[key] = false;
     });
@@ -178,6 +207,6 @@ window.addEventListener("resize", () => {
  */
 document.addEventListener("fullscreenchange", () => {
   if (canvas && world && world.resize) {
-    world.resize(); 
+    world.resize();
   }
 });

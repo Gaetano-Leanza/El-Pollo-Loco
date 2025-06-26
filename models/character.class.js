@@ -2,169 +2,169 @@
  * Character class representing the main player character in the game.
  * Extends MovableObject to inherit movement and physics capabilities.
  * Handles character animations, movement, death sequences, and user interactions.
- * 
+ *
  * @extends MovableObject
  * @class Character
  */
 class Character extends MovableObject {
-  /** 
-   * Time in milliseconds before short idle animation starts 
+  /**
+   * Time in milliseconds before short idle animation starts
    * @static {number}
    */
   static IDLE_TIME_SHORT = 500;
 
-  /** 
-   * Time in milliseconds before long idle animation starts 
+  /**
+   * Time in milliseconds before long idle animation starts
    * @static {number}
    */
   static IDLE_TIME_LONG = 3000;
 
-  /** 
-   * Interval in milliseconds for animation frame updates 
+  /**
+   * Interval in milliseconds for animation frame updates
    * @static {number}
    */
   static ANIMATION_INTERVAL = 100;
 
-  /** 
-   * Duration in milliseconds for each death animation frame 
+  /**
+   * Duration in milliseconds for each death animation frame
    * @static {number}
    */
   static DEATH_ANIMATION_FRAME_DURATION = 150;
 
-  /** 
-   * Time in milliseconds to display game over screen 
+  /**
+   * Time in milliseconds to display game over screen
    * @static {number}
    */
   static GAME_OVER_DISPLAY_TIME = 3000;
 
-  /** 
-   * Scale factor for canvas overlay images (0.8 = 80% of canvas size) 
+  /**
+   * Scale factor for canvas overlay images (0.8 = 80% of canvas size)
    * @static {number}
    */
   static CANVAS_SCALE = 0.8;
 
-  /** 
-   * Character sprite height in pixels 
+  /**
+   * Character sprite height in pixels
    * @type {number}
    */
   height = 280;
 
-  /** 
-   * Character y-position on canvas 
+  /**
+   * Character y-position on canvas
    * @type {number}
    */
   y = 80;
 
-  /** 
-   * Character movement speed in pixels per frame 
+  /**
+   * Character movement speed in pixels per frame
    * @type {number}
    */
   speed = 10;
 
-  /** 
-   * Horizontal offset for hitbox positioning from sprite left edge 
+  /**
+   * Horizontal offset for hitbox positioning from sprite left edge
    * @type {number}
    */
   hitboxOffsetX = 25;
 
-  /** 
-   * Vertical offset for hitbox positioning from sprite top edge 
+  /**
+   * Vertical offset for hitbox positioning from sprite top edge
    * @type {number}
    */
   hitboxOffsetY = 130;
 
-  /** 
-   * Reduction in hitbox width from sprite width 
+  /**
+   * Reduction in hitbox width from sprite width
    * @type {number}
    */
   hitboxWidthReduction = 50;
 
-  /** 
-   * Reduction in hitbox height from sprite height 
+  /**
+   * Reduction in hitbox height from sprite height
    * @type {number}
    */
   hitboxHeightReduction = 160;
 
-  /** 
-   * Number of coins currently collected by character 
+  /**
+   * Number of coins currently collected by character
    * @type {number}
    */
   collectedCoins = 0;
 
-  /** 
-   * Maximum number of coins that can be collected 
+  /**
+   * Maximum number of coins that can be collected
    * @type {number}
    */
   maxCoins = 20;
 
-  /** 
-   * Number of bottles currently collected by character 
+  /**
+   * Number of bottles currently collected by character
    * @type {number}
    */
   collectedBottles = 0;
 
-  /** 
-   * Maximum number of bottles that can be collected 
+  /**
+   * Maximum number of bottles that can be collected
    * @type {number}
    */
   maxBottles = 20;
 
-  /** 
-   * Timestamp of last movement for idle animation timing 
+  /**
+   * Timestamp of last movement for idle animation timing
    * @type {number}
    */
   lastMoveTime = Date.now();
 
-  /** 
-   * Interval ID for idle animation timer 
+  /**
+   * Interval ID for idle animation timer
    * @type {number|undefined}
    */
   idleInterval;
 
-  /** 
-   * Flag indicating if character is currently throwing a bottle 
+  /**
+   * Flag indicating if character is currently throwing a bottle
    * @type {boolean}
    */
   isThrowingBottle = false;
 
-  /** 
-   * Flag indicating if character is in dying state 
+  /**
+   * Flag indicating if character is in dying state
    * @type {boolean}
    */
   isDying = false;
 
-  /** 
-   * Flag indicating if death animation has started 
+  /**
+   * Flag indicating if death animation has started
    * @type {boolean}
    */
   deathAnimationStarted = false;
 
-  /** 
-   * Flag indicating if game over overlay should be shown 
+  /**
+   * Flag indicating if game over overlay should be shown
    * @type {boolean}
    */
   showGameOverOverlay = false;
 
-  /** 
-   * Flag to prevent multiple hurt sound plays 
+  /**
+   * Flag to prevent multiple hurt sound plays
    * @type {boolean}
    */
   hurt_sound_played = false;
 
-  /** 
-   * Reference to the game world object 
+  /**
+   * Reference to the game world object
    * @type {Object}
    */
   world;
 
-  /** 
-   * Reference to canvas 2D context 
+  /**
+   * Reference to canvas 2D context
    * @type {CanvasRenderingContext2D}
    */
   ctx;
 
-  /** 
-   * Reference to HTML canvas element 
+  /**
+   * Reference to HTML canvas element
    * @type {HTMLCanvasElement}
    */
   canvas;
@@ -205,8 +205,8 @@ class Character extends MovableObject {
     return this._death_sound;
   }
 
-  /** 
-   * Array of walking animation image paths 
+  /**
+   * Array of walking animation image paths
    * @type {string[]}
    */
   IMAGES_WALKING = [
@@ -218,8 +218,8 @@ class Character extends MovableObject {
     "../img/2_character_pepe/2_walk/W-26.png",
   ];
 
-  /** 
-   * Array of jumping animation image paths 
+  /**
+   * Array of jumping animation image paths
    * @type {string[]}
    */
   IMAGES_JUMPING = [
@@ -234,8 +234,8 @@ class Character extends MovableObject {
     "../img/2_character_pepe/3_jump/J-39.png",
   ];
 
-  /** 
-   * Array of death animation image paths 
+  /**
+   * Array of death animation image paths
    * @type {string[]}
    */
   IMAGES_DEAD = [
@@ -248,8 +248,8 @@ class Character extends MovableObject {
     "../img/2_character_pepe/5_dead/D-57.png",
   ];
 
-  /** 
-   * Array of hurt animation image paths 
+  /**
+   * Array of hurt animation image paths
    * @type {string[]}
    */
   IMAGES_HURT = [
@@ -258,8 +258,8 @@ class Character extends MovableObject {
     "../img/2_character_pepe/4_hurt/H-43.png",
   ];
 
-  /** 
-   * Array of short idle animation image paths 
+  /**
+   * Array of short idle animation image paths
    * @type {string[]}
    */
   IMAGES_IDLE = [
@@ -275,8 +275,8 @@ class Character extends MovableObject {
     "../img/2_character_pepe/1_idle/idle/I-10.png",
   ];
 
-  /** 
-   * Array of long idle animation image paths 
+  /**
+   * Array of long idle animation image paths
    * @type {string[]}
    */
   IMAGES_LONG_IDLE = [
@@ -632,6 +632,17 @@ class Character extends MovableObject {
     setTimeout(() => {
       this.isThrowingBottle = false;
     }, 100);
+  }
+
+  /**
+   * Increases the character's collected coin counter by one.
+   * Optionally resets the idle timer to prevent idle behavior after collecting a coin.
+   *
+   * @returns {void}
+   */
+  collectCoin() {
+    this.collectedCoins++;
+    this.resetIdleTimer();
   }
 
   /**

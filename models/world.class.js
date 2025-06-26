@@ -126,6 +126,7 @@ class World {
     this.renderWorld();
     this.renderUI();
     this.scheduleNextFrame();
+    Coin.drawCounter(this.ctx, this.canvas.width, this.character.collectedCoins);
   }
 
   /**
@@ -153,6 +154,7 @@ class World {
   updateCamera() {
     this.camera_x = -this.character.x + 100;
   }
+  
   /**
    * Updates all game objects that need per-frame updates
    */
@@ -390,30 +392,35 @@ class World {
     );
   }
 
-  /**
-   * Generic method to handle item pickups
-   * @param {Array} items Array of items to check
-   * @param {string} collectedProp Property name for collected count
-   * @param {string} maxProp Property name for max capacity
-   * @param {StatusBar} statusBar Status bar to update
-   * @param {string} [sound] Optional sound to play on pickup
-   */
-  checkPickups(items, collectedProp, maxProp, statusBar, sound) {
-    for (let i = items.length - 1; i >= 0; i--) {
-      const item = items[i];
-      if (this.character.isColliding(item)) {
-        this.character[collectedProp] = Math.min(
-          this.character[collectedProp] + 1,
-          this.character[maxProp]
-        );
-        items.splice(i, 1);
-        statusBar.setPercentage(
-          (this.character[collectedProp] / this.character[maxProp]) * 100
-        );
-        if (sound) new Audio(sound).play();
+/**
+ * Generic method to handle item pickups
+ * @param {Array} items Array of items to check
+ * @param {string} collectedProp Property name for collected count
+ * @param {string} maxProp Property name for max capacity
+ * @param {StatusBar} statusBar Status bar to update
+ * @param {string} [sound] Optional sound to play on pickup
+ */
+checkPickups(items, collectedProp, maxProp, statusBar, sound) {
+  for (let i = items.length - 1; i >= 0; i--) {
+    const item = items[i];
+    if (this.character.isColliding(item)) {
+      // Spezielle Behandlung für Coins
+      if (item instanceof Coin) {
+        item.collect(); // Markiert Coin als gesammelt
       }
+      
+      this.character[collectedProp] = Math.min(
+        this.character[collectedProp] + 1,
+        this.character[maxProp]
+      );
+      items.splice(i, 1);
+      statusBar.setPercentage(
+        (this.character[collectedProp] / this.character[maxProp]) * 100
+      );
+      if (sound) new Audio(sound).play();
     }
   }
+}
 
   /**
    * Adds multiple objects to the game map
