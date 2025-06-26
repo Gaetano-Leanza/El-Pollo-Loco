@@ -126,7 +126,11 @@ class World {
     this.renderWorld();
     this.renderUI();
     this.scheduleNextFrame();
-    Coin.drawCounter(this.ctx, this.canvas.width, this.character.collectedCoins);
+    Coin.drawCounter(
+      this.ctx,
+      this.canvas.width,
+      this.character.collectedCoins
+    );
   }
 
   /**
@@ -154,7 +158,7 @@ class World {
   updateCamera() {
     this.camera_x = -this.character.x + 100;
   }
-  
+
   /**
    * Updates all game objects that need per-frame updates
    */
@@ -198,15 +202,8 @@ class World {
    * @param {number} energy The remaining energy percentage of the endboss
    */
   registerEndbossHit(energy) {
-    console.log(`Endboss hit! Energy: ${energy}%`); // Debug-Log hinzufügen
-
     if (this.endbossStatusBar && this.endbossActivated) {
       this.endbossStatusBar.setPercentage(energy);
-      console.log(`Endboss statusbar updated to ${energy}%`); // Debug-Log
-    } else {
-      console.log(
-        "Endboss statusbar not updated - statusbar or activation missing"
-      );
     }
 
     this.endbossHitCount++;
@@ -388,39 +385,39 @@ class World {
       "collectedCoins",
       "maxCoins",
       this.coinBar,
-      "audio/collectcoin.mp4"
+      "collectcoin.mp4"
     );
   }
 
-/**
- * Generic method to handle item pickups
- * @param {Array} items Array of items to check
- * @param {string} collectedProp Property name for collected count
- * @param {string} maxProp Property name for max capacity
- * @param {StatusBar} statusBar Status bar to update
- * @param {string} [sound] Optional sound to play on pickup
- */
-checkPickups(items, collectedProp, maxProp, statusBar, sound) {
-  for (let i = items.length - 1; i >= 0; i--) {
-    const item = items[i];
-    if (this.character.isColliding(item)) {
-      // Spezielle Behandlung für Coins
-      if (item instanceof Coin) {
-        item.collect(); // Markiert Coin als gesammelt
+  /**
+   * Generic method to handle item pickups
+   * @param {Array} items Array of items to check
+   * @param {string} collectedProp Property name for collected count
+   * @param {string} maxProp Property name for max capacity
+   * @param {StatusBar} statusBar Status bar to update
+   * @param {string} [sound] Optional sound to play on pickup
+   */
+  checkPickups(items, collectedProp, maxProp, statusBar, sound) {
+    for (let i = items.length - 1; i >= 0; i--) {
+      const item = items[i];
+      if (this.character.isColliding(item)) {
+        if (item instanceof Coin) {
+          item.collect();
+        }
+
+        this.character[collectedProp] = Math.min(
+          this.character[collectedProp] + 1,
+          this.character[maxProp]
+        );
+        items.splice(i, 1);
+        statusBar.setPercentage(
+          (this.character[collectedProp] / this.character[maxProp]) * 100
+        );
+
+        if (sound) playSound(sound);
       }
-      
-      this.character[collectedProp] = Math.min(
-        this.character[collectedProp] + 1,
-        this.character[maxProp]
-      );
-      items.splice(i, 1);
-      statusBar.setPercentage(
-        (this.character[collectedProp] / this.character[maxProp]) * 100
-      );
-      if (sound) new Audio(sound).play();
     }
   }
-}
 
   /**
    * Adds multiple objects to the game map
@@ -450,25 +447,12 @@ checkPickups(items, collectedProp, maxProp, statusBar, sound) {
 
     this.ctx.restore();
   }
-
   /**
    * Separate Methode für Endboss worldReference Setup
    */
   setupEndbossReference() {
     if (this.endboss) {
-      console.log("Setting worldReference for endboss");
       this.endboss.worldReference = this;
-
-      // Debug: Sofortiger Test
-      setTimeout(() => {
-        if (this.endboss.worldReference) {
-          console.log("✓ worldReference successfully set");
-        } else {
-          console.log("✗ worldReference lost!");
-        }
-      }, 100);
-    } else {
-      console.log("No endboss found in level");
     }
   }
 
@@ -478,11 +462,8 @@ checkPickups(items, collectedProp, maxProp, statusBar, sound) {
   updateEndbossActivation() {
     if (this.endboss && this.character.x > 3000 && !this.endbossActivated) {
       this.endbossActivated = true;
-      console.log("Endboss activated!");
 
-      // Sicherstellung dass worldReference noch gesetzt ist
       if (!this.endboss.worldReference) {
-        console.log("Re-setting worldReference during activation");
         this.endboss.worldReference = this;
       }
     }
@@ -501,7 +482,6 @@ checkPickups(items, collectedProp, maxProp, statusBar, sound) {
 
         // Endboss Energie direkt reduzieren
         this.endboss.energy -= 20;
-        console.log(`Direct hit! Endboss energy: ${this.endboss.energy}`);
 
         // Direkt registerEndbossHit aufrufen
         this.registerEndbossHit(this.endboss.energy);

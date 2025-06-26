@@ -46,7 +46,6 @@ class Bottle extends DrawableObject {
    * @param {CanvasRenderingContext2D} ctx - Der Canvas Rendering Context.
    */
   drawFrame(ctx) {
-    // Optional: Überschreiben für Animationen
   }
 
   /**

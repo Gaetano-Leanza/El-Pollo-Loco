@@ -176,7 +176,7 @@ class Character extends MovableObject {
    */
   get hurt_sound() {
     if (!this._hurt_sound) {
-      this._hurt_sound = new Audio("audio/hurt-character.mp4");
+      this._hurt_sound = playSound("hurt-character.mp4");
     }
     return this._hurt_sound;
   }
@@ -188,7 +188,7 @@ class Character extends MovableObject {
    */
   get jump_sound() {
     if (!this._jump_sound) {
-      this._jump_sound = new Audio("audio/jump.mp4");
+      this._jump_sound = playSound("jump.mp4");
     }
     return this._jump_sound;
   }
@@ -200,7 +200,7 @@ class Character extends MovableObject {
    */
   get death_sound() {
     if (!this._death_sound) {
-      this._death_sound = new Audio("audio/death.mp4");
+      this._death_sound = playSound("death.mp4");
     }
     return this._death_sound;
   }
@@ -429,9 +429,8 @@ class Character extends MovableObject {
 
     if (this.world.keyboard.SPACE && !this.isAboveGround()) {
       this.jump();
-      this.jump_sound
-        .play()
-        .catch((err) => console.warn("Jump sound failed:", err));
+         playSound('jump.mp4');
+
       return true;
     }
     return isMoving;
@@ -490,24 +489,22 @@ class Character extends MovableObject {
    * @param {Function} setHurtCallback - Callback function to set hurt state
    * @returns {boolean} True if hurt animation is playing, false otherwise
    */
-  handleHurtAnimation(setHurtCallback) {
+ handleHurtAnimation(setHurtCallback) {
     if (this.isDying) return false;
 
     if (this.isHurt()) {
-      this.playAnimation(this.IMAGES_HURT);
-      setHurtCallback();
-      if (!this.hurt_sound_played) {
-        this.hurt_sound
-          .play()
-          .catch((err) => console.warn("Hurt sound failed:", err));
-        this.hurt_sound_played = true;
-      }
-      return true;
+        this.playAnimation(this.IMAGES_HURT);
+        setHurtCallback();
+        if (!this.hurt_sound_played) {
+            playSound('hurt-character.mp4');
+            this.hurt_sound_played = true;
+        }
+        return true;
     } else {
-      this.hurt_sound_played = false;
+        this.hurt_sound_played = false;
     }
     return false;
-  }
+}
 
   /**
    * Handles jumping animation when character is airborne.
@@ -776,30 +773,27 @@ class Character extends MovableObject {
     return false;
   }
 
-  /**
-   * Plays the death animation sequence with sound effects.
-   * Cycles through death images and shows game over screen when complete.
-   */
-  playDeathAnimation() {
-    const deathAudio = new Audio("audio/death-scream.mp4");
-    deathAudio
-      .play()
-      .catch((error) => console.warn("Death sound playback failed:", error));
+/**
+ * Spielt die Todesanimation ab und verwendet die globale playSound Funktion
+ */
+playDeathAnimation() {
+    // Verwende die globale playSound Funktion statt direktem Audio-Objekt
+    playSound("death-scream.mp4");
 
     let currentFrame = 0;
     const animationInterval = setInterval(() => {
-      if (currentFrame < this.IMAGES_DEAD.length) {
-        this.img = this.imageCache[this.IMAGES_DEAD[currentFrame]];
-        currentFrame++;
-      } else {
-        clearInterval(animationInterval);
-        this.gameOverHandler.world = this.world;
-        this.gameOverHandler.ctx = this.ctx || this.findCanvasContext();
-        this.gameOverHandler.canvas = this.canvas;
-        this.gameOverHandler.showGameOverScreen();
-      }
+        if (currentFrame < this.IMAGES_DEAD.length) {
+            this.img = this.imageCache[this.IMAGES_DEAD[currentFrame]];
+            currentFrame++;
+        } else {
+            clearInterval(animationInterval);
+            this.gameOverHandler.world = this.world;
+            this.gameOverHandler.ctx = this.ctx || this.findCanvasContext();
+            this.gameOverHandler.canvas = this.canvas;
+            this.gameOverHandler.showGameOverScreen();
+        }
     }, Character.DEATH_ANIMATION_FRAME_DURATION);
-  }
+}
 
   /**
    * Finds the canvas context as fallback if not directly set

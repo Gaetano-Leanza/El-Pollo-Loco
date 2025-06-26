@@ -33,8 +33,6 @@ class ThrowableObject extends MovableObject {
   /** @type {number} Speed (ms) of rotation animation intervals */
   rotationSpeed = 100;
 
-  splashSound = new Audio("audio/bottle-splash.mp4"); // Audio-Objekt als Property
-
   /**
    * Creates a new ThrowableObject instance (bottle) at specified coordinates.
    * @param {number} x - The initial x-coordinate.
@@ -139,22 +137,30 @@ class ThrowableObject extends MovableObject {
     );
   }
 
-  splash(cause = "unknown") {
-    if (this.isSplashing) return;
+  /**
+ * Triggert die Splash-Animation und den Soundeffekt der Flasche.
+ * Wird aufgerufen bei Kollision mit Boden, Gegner oder Endboss.
+ * 
+ * - Setzt `isSplashing` auf true, um weitere Aktionen zu verhindern.
+ * - Stoppt alle aktiven Bewegungsintervalle.
+ * - Spielt den Splash-Sound über die zentrale `playSound()`-Funktion.
+ * - Startet die Splash-Animation.
+ * - Setzt `hasHitEnemy` auf true, wenn ein Gegner oder Endboss getroffen wurde.
+ * 
+ * @param {string} [cause="unknown"] - Der Auslöser für den Splash (z. B. "ground", "enemy", "endboss").
+ */
+splash(cause = "unknown") {
+  if (this.isSplashing) return;
 
-    this.isSplashing = true;
-    this.stopIntervals();
-    
-    // Sound abspielen, wenn Splash startet
-    this.splashSound.currentTime = 0; // Zur Sicherheit zum Anfang springen
-    this.splashSound.play();
+  this.isSplashing = true;
+  this.stopIntervals();
+  playSound("bottle-splash.mp4");
+  this.playSplashAnimation();
 
-    this.playSplashAnimation();
-
-    if (cause === "endboss" || cause === "enemy") {
-      this.hasHitEnemy = true;
-    }
+  if (cause === "endboss" || cause === "enemy") {
+    this.hasHitEnemy = true;
   }
+}
 
   /**
    * Plays the splash animation by cycling through splash images.

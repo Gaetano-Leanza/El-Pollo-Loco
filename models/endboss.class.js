@@ -565,16 +565,10 @@ class Endboss extends MovableObject {
   /**
    * Plays hurt sound effect
    */
-  playHurtSound() {
-    const hurtSound = new Audio("audio/hurt-endboss.mp4");
-    hurtSound.volume = 0.6;
-    hurtSound.currentTime = 0;
-    hurtSound
-      .play()
-      .catch((e) =>
-        console.warn("Endboss-Hurt-Sound konnte nicht abgespielt werden:", e)
-      );
-  }
+ playHurtSound() {
+  playSound("hurt-endboss.mp4", 0.6);
+}
+
 
   /**
    * Evaluates if endboss should die or just be hurt
