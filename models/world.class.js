@@ -1,55 +1,57 @@
 /**
- * Represents the game world containing all game objects, characters and game logic.
- * Manages rendering, collisions, game state and interactions between game entities.
+ * Represents the game world containing all game objects, characters, and game logic.
+ * @class
  */
 class World {
   /** @type {Level} The current game level */
   level;
   /** @type {HTMLCanvasElement} The game canvas element */
   canvas;
-  /** @type {CanvasRenderingContext2D} The 2D rendering context */
+  /** @type {CanvasRenderingContext2D} The 2D rendering context for the canvas */
   ctx;
-  /** @type {Keyboard} Keyboard input handler */
+  /** @type {Keyboard} The keyboard input handler */
   keyboard;
-  /** @type {number} Camera x-offset for viewport scrolling */
+  /** @type {number} The camera's x-coordinate offset */
   camera_x = 0;
-  /** @type {StatusBar} Health status bar for the character */
+  /** @type {StatusBar} The health status bar for the character */
   statusBar = new StatusBar("health", 10, 0);
-  /** @type {StatusBar} Bottle count status bar */
+  /** @type {StatusBar} The bottle status bar showing collected bottles */
   bottleBar = new StatusBar("bottle", 10, 60);
-  /** @type {StatusBar} Coin count status bar */
+  /** @type {StatusBar} The coin status bar showing collected coins */
   coinBar = new StatusBar("coin", 10, 120);
-  /** @type {StatusBar|null} Endboss health status bar */
+  /** @type {StatusBar} The status bar for the endboss */
   endbossStatusBar;
-  /** @type {ThrowableObject[]} Array of active thrown bottles */
+  /** @type {ThrowableObject[]} Array of currently thrown bottles */
   throwableObjects = [];
-  /** @type {number} Timestamp of last bottle throw */
+  /** @type {number} Timestamp of the last bottle throw */
   lastBottleThrow = 0;
-  /** @type {boolean} Debug mode flag */
+  /** @type {boolean} Flag for debug mode (shows hitboxes) */
   DEBUG_MODE = false;
-  /** @type {Endboss|null} Reference to the endboss */
+  /** @type {Endboss} Reference to the endboss enemy */
   endboss;
-  /** @type {boolean} Flag if endboss is activated */
+  /** @type {boolean} Flag indicating if the endboss is activated */
   endbossActivated = false;
-  /** @type {number} Count of hits on endboss */
+  /** @type {number} Count of hits on the endboss */
   endbossHitCount = 0;
-  /** @type {boolean} Game over state flag */
+  /** @type {boolean} Flag indicating if the game is over */
   isGameOver = false;
-  /** @type {Object} Collection of game intervals */
+  /** @type {Object} Collection of game interval IDs */
   intervals = {};
   /** @type {Character} The player character */
   character = new Character();
+  /** @type {boolean} Flag indicating if character has landed at least once */
+  hasLandedOnce = false;
 
   /**
-   * Creates a new World instance
-   * @param {HTMLCanvasElement} canvas The game canvas element
-   * @param {Keyboard} keyboard Keyboard input handler
+   * Creates a new World instance.
+   * @constructor
+   * @param {HTMLCanvasElement} canvas - The game canvas element
+   * @param {Keyboard} keyboard - The keyboard input handler
    */
   constructor(canvas, keyboard) {
     this.ctx = canvas.getContext("2d");
     this.canvas = canvas;
     this.keyboard = keyboard;
-    playSound("jump-on-chicken.mp4");
     window.character = this.character;
     this.level = level1;
     this.setWorld();
@@ -67,7 +69,7 @@ class World {
   }
 
   /**
-   * Sets the world reference for the character and starts animation
+   * Sets the world reference for the character and starts character animation.
    */
   setWorld() {
     this.character.world = this;
@@ -75,7 +77,7 @@ class World {
   }
 
   /**
-   * Starts all game loops for collision detection and game logic
+   * Starts the main game loops for collision detection and game logic.
    */
   run() {
     this.intervals.checkEnemyCollisions = setInterval(() => {
@@ -91,7 +93,7 @@ class World {
   }
 
   /**
-   * Creates the endboss status bar at the top right of the screen
+   * Creates the status bar for the endboss.
    */
   createEndbossStatusBar() {
     this.endbossStatusBar = new StatusBar(
@@ -103,18 +105,18 @@ class World {
   }
 
   /**
-   * Registers a hit on the endboss and updates its status bar
-   * @param {number} energy The remaining energy percentage of the endboss
+   * Registers a hit on the endboss and updates its status bar.
+   * @param {number} energy - The current energy level of the endboss
    */
   registerEndbossHit(energy) {
-    if (this.endbossStatusBar) {
+    if (this.endbossStatusBar && this.endbossActivated) {
       this.endbossStatusBar.setPercentage(energy);
     }
     this.endbossHitCount++;
   }
 
   /**
-   * Main draw loop that renders the game world
+   * Main draw function that renders the game world.
    */
   draw() {
     if (this.isGameOver) return;
@@ -134,40 +136,41 @@ class World {
   }
 
   /**
-   * Clears the canvas for fresh rendering
+   * Clears the canvas for the next frame.
    */
   clearCanvas() {
     this.ctx.clearRect(0, 0, this.canvas.width, this.canvas.height);
   }
 
   /**
-   * Activates the endboss when character reaches certain position
+   * Activates the endboss when the character reaches a certain position.
    */
   updateEndbossActivation() {
     if (this.endboss && this.character.x > 3000 && !this.endbossActivated) {
       this.endbossActivated = true;
+
+      if (!this.endboss.worldReference) {
+        this.endboss.worldReference = this;
+      }
     }
   }
 
   /**
-   * Updates the camera position to follow the character.
-   * The camera is centered horizontally on the character with an offset of 100px
-   * to keep the character slightly left of center for better visibility ahead.
-   * This provides consistent camera behavior regardless of endboss activation.
+   * Updates the camera position based on character position.
    */
   updateCamera() {
     this.camera_x = -this.character.x + 100;
   }
 
   /**
-   * Updates all game objects that need per-frame updates
+   * Updates all game objects that need per-frame updates.
    */
   updateGameObjects() {
     this.level.coins.forEach((coin) => coin.update());
   }
 
   /**
-   * Renders the game world with all objects
+   * Renders all world objects with camera offset.
    */
   renderWorld() {
     this.ctx.save();
@@ -188,7 +191,7 @@ class World {
   }
 
   /**
-   * Renders all UI elements (status bars)
+   * Renders all UI elements (status bars).
    */
   renderUI() {
     this.statusBar.draw(this.ctx);
@@ -198,26 +201,14 @@ class World {
   }
 
   /**
-   * Registers a hit on the endboss and updates its status bar
-   * @param {number} energy The remaining energy percentage of the endboss
-   */
-  registerEndbossHit(energy) {
-    if (this.endbossStatusBar && this.endbossActivated) {
-      this.endbossStatusBar.setPercentage(energy);
-    }
-
-    this.endbossHitCount++;
-  }
-
-  /**
-   * Schedules the next animation frame
+   * Schedules the next animation frame.
    */
   scheduleNextFrame() {
     requestAnimationFrame(() => this.draw());
   }
 
   /**
-   * Checks for collisions between character and enemies
+   * Checks for collisions between the character and enemies.
    */
   checkEnemyCollisions() {
     this.level.enemies.forEach((enemy) => {
@@ -228,8 +219,8 @@ class World {
   }
 
   /**
-   * Handles collision between character and enemy
-   * @param {Enemy} enemy The enemy being collided with
+   * Handles the collision between character and enemy.
+   * @param {Enemy} enemy - The enemy that collided with the character
    */
   handleCharacterEnemyCollision(enemy) {
     const charBox = this.character.getHitbox();
@@ -248,7 +239,12 @@ class World {
       enemy.hit();
       this.character.speedY = 20;
       this.character.x += this.character.x < enemy.x ? -15 : 15;
-      playSound("jump-on-chicken.mp4");
+
+      if (this.hasLandedOnce) {
+        playSound("jump-on-chicken.mp4");
+      } else {
+        this.hasLandedOnce = true;
+      }
     } else if (!this.character.isHurt()) {
       this.character.hit();
       this.statusBar.setPercentage(this.character.energy);
@@ -256,7 +252,7 @@ class World {
   }
 
   /**
-   * Removes dead enemies from the game
+   * Removes dead enemies from the game.
    */
   removeDeadEnemies() {
     this.level.enemies = this.level.enemies.filter(
@@ -268,8 +264,8 @@ class World {
   }
 
   /**
-   * Checks if character can throw a bottle
-   * @returns {boolean} True if bottle can be thrown
+   * Checks if a bottle can be thrown based on cooldown and available bottles.
+   * @returns {boolean} True if a bottle can be thrown
    */
   canThrowBottle() {
     const now = Date.now();
@@ -282,7 +278,7 @@ class World {
   }
 
   /**
-   * Creates and throws a new bottle
+   * Throws a new bottle projectile.
    */
   throwBottle() {
     let bottle = new ThrowableObject(
@@ -302,14 +298,14 @@ class World {
   }
 
   /**
-   * Checks if bottle should be thrown and throws it
+   * Checks if a bottle should be thrown based on input.
    */
   checkThrowObjects() {
     if (this.canThrowBottle()) this.throwBottle();
   }
 
   /**
-   * Checks all projectile collisions
+   * Checks for projectile collisions with enemies and endboss.
    */
   checkProjectileCollisions() {
     this.checkCollisionsWithEnemies();
@@ -318,7 +314,7 @@ class World {
   }
 
   /**
-   * Checks collisions between thrown bottles and enemies
+   * Checks for collisions between thrown bottles and enemies.
    */
   checkCollisionsWithEnemies() {
     this.throwableObjects.forEach((bottle) => {
@@ -332,7 +328,7 @@ class World {
   }
 
   /**
-   * Checks collisions between thrown bottles and endboss
+   * Checks for collisions between thrown bottles and the endboss.
    */
   checkCollisionsWithEndboss() {
     if (!this.endboss || this.endboss.isDead) return;
@@ -340,13 +336,17 @@ class World {
     this.throwableObjects.forEach((bottle) => {
       if (!bottle.isSplashing && bottle.isColliding(this.endboss)) {
         bottle.splash("endboss");
-        this.endboss.hit();
+        this.endboss.energy -= 20;
+        this.registerEndbossHit(this.endboss.energy);
+        if (this.endboss.energy <= 0) {
+          this.endboss.isDead = true;
+        }
       }
     });
   }
 
   /**
-   * Removes used projectiles from the game
+   * Removes used projectiles from the game.
    */
   removeUsedProjectiles() {
     this.throwableObjects = this.throwableObjects.filter(
@@ -355,7 +355,7 @@ class World {
   }
 
   /**
-   * Checks all item pickups
+   * Checks for item pickups (bottles and coins).
    */
   checkItemPickups() {
     this.checkBottlePickups();
@@ -363,7 +363,7 @@ class World {
   }
 
   /**
-   * Checks for bottle pickups by character
+   * Checks for bottle pickups by the character.
    */
   checkBottlePickups() {
     this.checkPickups(
@@ -375,7 +375,7 @@ class World {
   }
 
   /**
-   * Checks for coin pickups by character
+   * Checks for coin pickups by the character.
    */
   checkCoinPickups() {
     this.checkPickups(
@@ -388,12 +388,12 @@ class World {
   }
 
   /**
-   * Generic method to handle item pickups
-   * @param {Array} items Array of items to check
-   * @param {string} collectedProp Property name for collected count
-   * @param {string} maxProp Property name for max capacity
-   * @param {StatusBar} statusBar Status bar to update
-   * @param {string} [sound] Optional sound to play on pickup
+   * Generic method for handling item pickups.
+   * @param {Array} items - Array of items to check
+   * @param {string} collectedProp - Property name for collected count
+   * @param {string} maxProp - Property name for maximum count
+   * @param {StatusBar} statusBar - Status bar to update
+   * @param {string} [sound] - Optional sound to play on pickup
    */
   checkPickups(items, collectedProp, maxProp, statusBar, sound) {
     for (let i = items.length - 1; i >= 0; i--) {
@@ -418,16 +418,16 @@ class World {
   }
 
   /**
-   * Adds multiple objects to the game map
-   * @param {Array} objects Array of game objects to add
+   * Adds multiple game objects to the map.
+   * @param {Array} objects - Array of game objects to add
    */
   addObjectsToMap(objects) {
     objects.forEach((o) => this.addToMap(o));
   }
 
   /**
-   * Adds a single game object to the map
-   * @param {MovableObject} mo The movable object to add
+   * Adds a game object to the map with proper transformation.
+   * @param {MovableObject} mo - The movable object to add
    */
   addToMap(mo) {
     this.ctx.save();
@@ -445,50 +445,13 @@ class World {
 
     this.ctx.restore();
   }
+
   /**
-   * Separate Methode für Endboss worldReference Setup
+   * Sets up the world reference for the endboss.
    */
   setupEndbossReference() {
     if (this.endboss) {
       this.endboss.worldReference = this;
     }
-  }
-
-  /**
-   * Aktiviert den Endboss - erweitert mit worldReference check
-   */
-  updateEndbossActivation() {
-    if (this.endboss && this.character.x > 3000 && !this.endbossActivated) {
-      this.endbossActivated = true;
-
-      if (!this.endboss.worldReference) {
-        this.endboss.worldReference = this;
-      }
-    }
-  }
-
-  /**
-   * Alternative: Direkter Aufruf statt über endboss.hit()
-   * Verwende das als Backup-Lösung
-   */
-  checkCollisionsWithEndboss() {
-    if (!this.endboss || this.endboss.isDead) return;
-
-    this.throwableObjects.forEach((bottle) => {
-      if (!bottle.isSplashing && bottle.isColliding(this.endboss)) {
-        bottle.splash("endboss");
-
-        // Endboss Energie direkt reduzieren
-        this.endboss.energy -= 20;
-
-        // Direkt registerEndbossHit aufrufen
-        this.registerEndbossHit(this.endboss.energy);
-
-        // Falls Endboss tot ist
-        if (this.endboss.energy <= 0) {
-          this.endboss.isDead = true;
-        }
-      }
-    });
   }
 }

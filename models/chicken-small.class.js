@@ -10,9 +10,9 @@ class ChickenSmall extends BaseChicken {
   constructor(xOffset) {
     super(
       xOffset,
-      80, // Höherer y-Wert, aber...
-      50, // Breite
-      367, // Höhe hal
+      80, 
+      50, 
+      367,
       [
         // Array of image paths for walking animation
         "../img/3_enemies_chicken/chicken_small/1_walk/1_w.png",
