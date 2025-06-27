@@ -1,173 +1,56 @@
 /**
- * Character class representing the main player character in the game.
- * Extends MovableObject to inherit movement and physics capabilities.
- * Handles character animations, movement, death sequences, and user interactions.
- *
+ * Simplified Character class - delegates complex logic to handler classes
  * @extends MovableObject
- * @class Character
  */
 class Character extends MovableObject {
-  /**
-   * Time in milliseconds before short idle animation starts
-   * @static {number}
-   */
+  // Constants
   static IDLE_TIME_SHORT = 500;
-
-  /**
-   * Time in milliseconds before long idle animation starts
-   * @static {number}
-   */
   static IDLE_TIME_LONG = 3000;
-
-  /**
-   * Interval in milliseconds for animation frame updates
-   * @static {number}
-   */
   static ANIMATION_INTERVAL = 100;
-
-  /**
-   * Duration in milliseconds for each death animation frame
-   * @static {number}
-   */
   static DEATH_ANIMATION_FRAME_DURATION = 150;
 
-  /**
-   * Character sprite height in pixels
-   * @type {number}
-   */
+  // Basic properties
   height = 280;
-
-  /**
-   * Character y-position on canvas
-   * @type {number}
-   */
   y = 80;
-
-  /**
-   * Character movement speed in pixels per frame
-   * @type {number}
-   */
   speed = 10;
-
-  /**
-   * Horizontal offset for hitbox positioning from sprite left edge
-   * @type {number}
-   */
   hitboxOffsetX = 25;
-
-  /**
-   * Vertical offset for hitbox positioning from sprite top edge
-   * @type {number}
-   */
   hitboxOffsetY = 130;
-
-  /**
-   * Reduction in hitbox width from sprite width
-   * @type {number}
-   */
   hitboxWidthReduction = 50;
-
-  /**
-   * Reduction in hitbox height from sprite height
-   * @type {number}
-   */
   hitboxHeightReduction = 160;
-
-  /**
-   * Number of coins currently collected by character
-   * @type {number}
-   */
+  
+  // Game state
   collectedCoins = 0;
-
-  /**
-   * Maximum number of coins that can be collected
-   * @type {number}
-   */
   maxCoins = 20;
-
-  /**
-   * Number of bottles currently collected by character
-   * @type {number}
-   */
   collectedBottles = 0;
-
-  /**
-   * Maximum number of bottles that can be collected
-   * @type {number}
-   */
   maxBottles = 20;
-
-  /**
-   * Timestamp of last movement for idle animation timing
-   * @type {number}
-   */
   lastMoveTime = Date.now();
-
-  /**
-   * Interval ID for idle animation timer
-   * @type {number|undefined}
-   */
-  idleInterval;
-
-  /**
-   * Flag indicating if character is currently throwing a bottle
-   * @type {boolean}
-   */
+  
+  // Health properties - WICHTIG: Diese müssen initialisiert werden!
+  energy = 100;
+  lastHit = 0;
+  timeToRecover = 1500; // 1.5 Sekunden Invincibility frames (längere Pause zwischen Schäden)
+  
+  // Flags
   isThrowingBottle = false;
-
-  /**
-   * Flag indicating if character is in dying state
-   * @type {boolean}
-   */
   isDying = false;
-
-  /**
-   * Flag indicating if death animation has started
-   * @type {boolean}
-   */
   deathAnimationStarted = false;
-
-  /**
-   * Flag to prevent multiple hurt sound plays
-   * @type {boolean}
-   */
   hurtSoundPlayed = false;
 
-  /**
-   * Reference to the game world object
-   * @type {Object}
-   */
+  // References
   world;
-
-  /**
-   * Reference to canvas 2D context
-   * @type {CanvasRenderingContext2D}
-   */
   ctx;
-
-  /**
-   * Reference to HTML canvas element
-   * @type {HTMLCanvasElement}
-   */
   canvas;
 
-  /**
-   * Array of walking animation image paths
-   * @type {string[]}
-   */
+  // Image arrays (gekürzt für Übersichtlichkeit)
   IMAGES_WALKING = [
     "../img/2_character_pepe/2_walk/W-21.png",
     "../img/2_character_pepe/2_walk/W-22.png",
     "../img/2_character_pepe/2_walk/W-23.png",
     "../img/2_character_pepe/2_walk/W-24.png",
     "../img/2_character_pepe/2_walk/W-25.png",
-    "../img/2_character_pepe/2_walk/W-26.png",
+    "../img/2_character_pepe/2_walk/W-26.png"
   ];
 
-  /**
-   * Array of jumping animation image paths
-   * @type {string[]}
-   */
   IMAGES_JUMPING = [
     "../img/2_character_pepe/3_jump/J-31.png",
     "../img/2_character_pepe/3_jump/J-32.png",
@@ -177,13 +60,9 @@ class Character extends MovableObject {
     "../img/2_character_pepe/3_jump/J-36.png",
     "../img/2_character_pepe/3_jump/J-37.png",
     "../img/2_character_pepe/3_jump/J-38.png",
-    "../img/2_character_pepe/3_jump/J-39.png",
+    "../img/2_character_pepe/3_jump/J-39.png"
   ];
 
-  /**
-   * Array of death animation image paths
-   * @type {string[]}
-   */
   IMAGES_DEAD = [
     "../img/2_character_pepe/5_dead/D-51.png",
     "../img/2_character_pepe/5_dead/D-52.png",
@@ -191,23 +70,15 @@ class Character extends MovableObject {
     "../img/2_character_pepe/5_dead/D-54.png",
     "../img/2_character_pepe/5_dead/D-55.png",
     "../img/2_character_pepe/5_dead/D-56.png",
-    "../img/2_character_pepe/5_dead/D-57.png",
+    "../img/2_character_pepe/5_dead/D-57.png"
   ];
 
-  /**
-   * Array of hurt animation image paths
-   * @type {string[]}
-   */
   IMAGES_HURT = [
     "../img/2_character_pepe/4_hurt/H-41.png",
     "../img/2_character_pepe/4_hurt/H-42.png",
-    "../img/2_character_pepe/4_hurt/H-43.png",
+    "../img/2_character_pepe/4_hurt/H-43.png"
   ];
 
-  /**
-   * Array of short idle animation image paths
-   * @type {string[]}
-   */
   IMAGES_IDLE = [
     "../img/2_character_pepe/1_idle/idle/I-1.png",
     "../img/2_character_pepe/1_idle/idle/I-2.png",
@@ -218,13 +89,9 @@ class Character extends MovableObject {
     "../img/2_character_pepe/1_idle/idle/I-7.png",
     "../img/2_character_pepe/1_idle/idle/I-8.png",
     "../img/2_character_pepe/1_idle/idle/I-9.png",
-    "../img/2_character_pepe/1_idle/idle/I-10.png",
+    "../img/2_character_pepe/1_idle/idle/I-10.png"
   ];
 
-  /**
-   * Array of long idle animation image paths
-   * @type {string[]}
-   */
   IMAGES_LONG_IDLE = [
     "../img/2_character_pepe/1_idle/long_idle/I-11.png",
     "../img/2_character_pepe/1_idle/long_idle/I-12.png",
@@ -235,44 +102,44 @@ class Character extends MovableObject {
     "../img/2_character_pepe/1_idle/long_idle/I-17.png",
     "../img/2_character_pepe/1_idle/long_idle/I-18.png",
     "../img/2_character_pepe/1_idle/long_idle/I-19.png",
-    "../img/2_character_pepe/1_idle/long_idle/I-20.png",
+    "../img/2_character_pepe/1_idle/long_idle/I-20.png"
   ];
 
   /**
-   * Creates a new Character instance.
-   * Initializes the character with default images and applies gravity.
-   * @constructor
+   * Creates a new Character instance
    */
   constructor() {
     super();
+    
+    console.log("Character constructor called - Energy:", this.energy); // Debug
+    
     this.gameOverHandler = new GameOver();
+    
+    // Initialize handler classes
+    this.animations = new CharacterAnimations(this);
+    this.movement = new CharacterMovement(this);
+    this.actions = new CharacterActions(this);
+    this.health = new CharacterHealth(this);
+    
     this.initializeImages();
     this.applyGravity();
     this.gameOverHandler.loadGameOverImage();
   }
 
   /**
-   * Initializes all character images and loads them into cache.
-   * Loads the default walking image and all animation sequences.
-   * @private
+   * Initializes all character images and loads them into cache
    */
   initializeImages() {
     this.loadImage("../img/2_character_pepe/2_walk/W-21.png");
     const imageArrays = [
-      this.IMAGES_WALKING,
-      this.IMAGES_JUMPING,
-      this.IMAGES_DEAD,
-      this.IMAGES_HURT,
-      this.IMAGES_IDLE,
-      this.IMAGES_LONG_IDLE,
+      this.IMAGES_WALKING, this.IMAGES_JUMPING, this.IMAGES_DEAD,
+      this.IMAGES_HURT, this.IMAGES_IDLE, this.IMAGES_LONG_IDLE
     ];
-
-    imageArrays.forEach((images) => this.loadImages(images));
+    imageArrays.forEach(images => this.loadImages(images));
   }
 
   /**
-   * Sets the canvas rendering context for the character and game over handler.
-   * Stores references to both context and canvas for rendering operations.
+   * Sets the canvas rendering context
    * @param {CanvasRenderingContext2D} ctx - The 2D rendering context
    */
   setCanvasContext(ctx) {
@@ -283,8 +150,7 @@ class Character extends MovableObject {
   }
 
   /**
-   * Calculates and returns the character's collision hitbox.
-   * Adjusts the hitbox based on offsets and size reductions.
+   * Calculates and returns the character's collision hitbox
    * @returns {Object} Hitbox object with x, y, width, height properties
    */
   getHitbox() {
@@ -292,360 +158,40 @@ class Character extends MovableObject {
       x: this.x + this.hitboxOffsetX,
       y: this.y + this.hitboxOffsetY,
       width: this.width - this.hitboxWidthReduction,
-      height: this.height - this.hitboxHeightReduction,
+      height: this.height - this.hitboxHeightReduction
     };
   }
 
   /**
-   * Handles horizontal movement based on keyboard input.
-   * Prevents movement when character is dying and checks level boundaries.
-   * @returns {boolean} True if character moved, false otherwise
-   */
-  handleMovement() {
-    if (this.isDying) return false;
-
-    let isMoving = false;
-    const keyboard = this.world.keyboard;
-
-    if (keyboard.RIGHT && this.x < this.world.level.level_end_x) {
-      this.moveRight();
-      this.otherDirection = false;
-      isMoving = true;
-    }
-
-    if (keyboard.LEFT && this.x > 0) {
-      this.moveLeft();
-      this.otherDirection = true;
-      isMoving = true;
-    }
-
-    return isMoving;
-  }
-
-  /**
-   * Handles jumping behavior based on keyboard input and ground state.
-   * Plays jump sound when jump is executed.
-   * @param {boolean} isMoving - Whether character is currently moving horizontally
-   * @returns {boolean} True if character is jumping or moving, false otherwise
-   */
-  handleJumping(isMoving) {
-    if (this.isDying) return isMoving;
-
-    if (this.world.keyboard.SPACE && !this.isAboveGround()) {
-      this.jump();
-      playSound("jump.mp4");
-      return true;
-    }
-    return isMoving;
-  }
-
-  /**
-   * Updates the timestamp of last movement for idle animation timing.
-   * Only updates if character is moving and not dying.
-   * @param {boolean} isMoving - Whether the character is currently moving
-   */
-  updateLastMoveTime(isMoving) {
-    if (isMoving && !this.isDying) {
-      this.lastMoveTime = Date.now();
-    }
-  }
-
-  /**
-   * Updates the camera position to follow the character.
-   * Camera only follows when character is not dying.
-   */
-  updateCamera() {
-    if (!this.isDying) {
-      this.world.camera_x = -this.x + 100;
-    }
-  }
-
-  /**
-   * Starts the animation watcher interval that manages character animations.
-   * Handles death, hurt, jumping, walking, and idle animations with priority system.
-   */
-  startAnimationWatcher() {
-    this.idleInterval = setInterval(() => {
-      // Priority-based animation handling
-      if (this.handleDeathAnimation()) return;
-      if (this.handleHurtAnimation()) return;
-      if (this.handleJumpingAnimation()) return;
-      if (this.handleWalkingAnimation()) return;
-      if (this.isThrowingBottle) return;
-
-      // Handle idle animations if no other animation is active
-      const idleTime = Date.now() - this.lastMoveTime;
-      this.handleIdleAnimations(idleTime);
-    }, Character.ANIMATION_INTERVAL);
-  }
-
-  /**
-   * Handles hurt animation and sound effects.
-   * Prevents animation during death state and manages sound playback.
-   * @returns {boolean} True if hurt animation is playing, false otherwise
-   */
-  handleHurtAnimation() {
-    if (this.isDying) return false;
-
-    if (this.isHurt()) {
-      this.playAnimation(this.IMAGES_HURT);
-      if (!this.hurtSoundPlayed) {
-        playSound("hurt-character.mp4");
-        this.hurtSoundPlayed = true;
-      }
-      return true;
-    } else {
-      this.hurtSoundPlayed = false;
-      return false;
-    }
-  }
-
-  /**
-   * Handles jumping animation when character is airborne.
-   * @returns {boolean} True if jumping animation is playing, false otherwise
-   */
-  handleJumpingAnimation() {
-    if (this.isDying) return false;
-
-    if (this.isAboveGround()) {
-      this.playAnimation(this.IMAGES_JUMPING);
-      return true;
-    }
-    return false;
-  }
-
-  /**
-   * Handles walking animation based on keyboard input.
-   * Checks for right, left, or D key presses.
-   * @returns {boolean} True if walking animation is playing, false otherwise
-   */
-  handleWalkingAnimation() {
-    if (this.isDying) return false;
-
-    const keyboard = this.world.keyboard;
-    if (keyboard.RIGHT || keyboard.LEFT || keyboard.D) {
-      this.playAnimation(this.IMAGES_WALKING);
-      return true;
-    }
-    return false;
-  }
-
-  /**
-   * Handles idle animations based on time since last movement.
-   * Switches between short and long idle animations when appropriate.
-   * Short idle starts after 500ms, long idle after 3000ms of inactivity.
-   * @param {number} idleTime - Time in milliseconds since last movement
-   */
-  handleIdleAnimations(idleTime) {
-    if (this.isDying) return;
-
-    if (idleTime > Character.IDLE_TIME_LONG) {
-      this.playAnimation(this.IMAGES_LONG_IDLE);
-    } else if (idleTime > Character.IDLE_TIME_SHORT) {
-      this.playAnimation(this.IMAGES_IDLE);
-    }
-  }
-
-  /**
-   * Resets the idle timer to current time.
-   * Used to restart idle animation timing after actions.
+   * Resets the idle timer to current time
    */
   resetIdleTimer() {
     this.lastMoveTime = Date.now();
   }
 
   /**
-   * Main animation loop that runs at 60 FPS.
-   * Handles movement, jumping, camera updates, and starts animation watcher.
+   * Main animation loop that runs at 60 FPS
    */
   animate() {
     setInterval(() => {
-      this.checkForDeath();
+      this.health.checkForDeath();
       if (this.isDying) {
-        this.handleDeathAnimation();
+        this.animations.handleDeathAnimation();
         return;
       }
 
-      const isMoving = this.handleMovement();
-      this.handleJumping(isMoving);
-      this.updateLastMoveTime(isMoving);
-      this.updateCamera();
+      const isMoving = this.movement.handleMovement();
+      this.movement.handleJumping(isMoving);
+      this.movement.updateLastMoveTime(isMoving);
+      this.movement.updateCamera();
     }, 1000 / 60);
 
-    this.startAnimationWatcher();
+    this.animations.startAnimationWatcher();
   }
 
   /**
-   * Initiates bottle throwing sequence if conditions are met.
-   * Creates throwable bottle, adds to world, decrements inventory.
-   */
-  throwBottle() {
-    if (!this.canThrowBottle()) return;
-
-    const bottle = this.createThrowableBottle();
-    this.addBottleToWorld(bottle);
-    this.collectedBottles--;
-    this.resetIdleTimer();
-    this.markAsThrowingTemporarily();
-  }
-
-  /**
-   * Checks if character can throw a bottle.
-   * Requires bottles in inventory and character must not be dying.
-   * @returns {boolean} True if bottle can be thrown, false otherwise
-   */
-  canThrowBottle() {
-    return this.collectedBottles > 0 && !this.isDying;
-  }
-
-  /**
-   * Creates a new throwable bottle object at character position.
-   * @returns {ThrowableObject} New throwable bottle instance
-   */
-  createThrowableBottle() {
-    return new ThrowableObject(this.x + this.width / 2, this.y);
-  }
-
-  /**
-   * Adds a bottle to the world's throwable objects array.
-   * @param {ThrowableObject} bottle - The bottle to add to the world
-   */
-  addBottleToWorld(bottle) {
-    this.world.throwableObjects.push(bottle);
-  }
-
-  /**
-   * Temporarily marks character as throwing to prevent animation conflicts.
-   * Flag is automatically cleared after 100ms.
-   */
-  markAsThrowingTemporarily() {
-    this.isThrowingBottle = true;
-    setTimeout(() => {
-      this.isThrowingBottle = false;
-    }, 100);
-  }
-
-  /**
-   * Increases the character's collected coin counter by one.
-   * Resets the idle timer to prevent idle behavior after collecting a coin.
-   */
-  collectCoin() {
-    this.collectedCoins++;
-    this.resetIdleTimer();
-  }
-
-  /**
-   * Sets the character's health/energy value.
-   * Triggers death check after health change.
-   * @param {number} health - New health value to set
-   */
-  setHealth(health) {
-    this.energy = health;
-    this.checkForDeath();
-  }
-
-  /**
-   * Handles character taking damage.
-   * Calls parent hit method and checks for death condition.
-   */
-  hit() {
-    if (this.isDying) return;
-    super.hit();
-    this.checkForDeath();
-  }
-
-  /**
-   * Initiates the character death sequence.
-   * Sets death flags, stops movement, and begins death animation.
-   */
-  triggerDeath() {
-    if (this.isDying) return;
-
-    this.isDying = true;
-    this.deathAnimationStarted = false;
-    this.energy = Math.min(this.energy, 15);
-    if (this.health !== undefined) this.health = Math.min(this.health, 15);
-
-    if (this.walking_sound) this.walking_sound.pause();
-    this.speed = 0;
-    this.acceleration = 0;
-    this.handleDeathAnimation();
-  }
-
-  /**
-   * Checks if character should die based on energy, health, or status bar values.
-   * Consolidated death condition checking.
-   */
-  checkForDeath() {
-    if (this.isDying) return;
-
-    const isDead = 
-      (this.energy !== undefined && this.energy <= 15) ||
-      (this.health !== undefined && this.health <= 15) ||
-      this.isDeadByStatusBar();
-
-    if (isDead) {
-      this.triggerDeath();
-    }
-  }
-
-  /**
-   * Checks if character is dead based on status bar indicators.
-   * @returns {boolean} True if dead by status bar, false otherwise
-   */
-  isDeadByStatusBar() {
-    const statusBar = this.world?.statusBar;
-    const healthBar = this.world?.statusBarHealth;
-
-    return (
-      statusBar?.percentage <= 15 ||
-      statusBar?.statusBarIndex <= 1 ||
-      statusBar?.currentImageIndex <= 1 ||
-      healthBar?.percentage <= 15
-    );
-  }
-
-  /**
-   * Handles the death animation sequence.
-   * Starts animation if not already started and character is dead.
-   * @returns {boolean} True if death animation is active, false otherwise
-   */
-  handleDeathAnimation() {
-    if (this.isDead() || this.isDying) {
-      if (!this.deathAnimationStarted) {
-        this.deathAnimationStarted = true;
-        this.playDeathAnimation();
-      }
-      return true;
-    }
-    return false;
-  }
-
-  /**
-   * Plays the death animation sequence and handles game over screen.
-   * Uses global playSound function for death sound effect.
-   */
-  playDeathAnimation() {
-    playSound("death-scream.mp4");
-
-    let currentFrame = 0;
-    const animationInterval = setInterval(() => {
-      if (currentFrame < this.IMAGES_DEAD.length) {
-        this.img = this.imageCache[this.IMAGES_DEAD[currentFrame]];
-        currentFrame++;
-      } else {
-        clearInterval(animationInterval);
-        this.gameOverHandler.world = this.world;
-        this.gameOverHandler.ctx = this.ctx || this.findCanvasContext();
-        this.gameOverHandler.canvas = this.canvas;
-        this.gameOverHandler.showGameOverScreen();
-      }
-    }, Character.DEATH_ANIMATION_FRAME_DURATION);
-  }
-
-  /**
-   * Finds the canvas context as fallback if not directly set.
-   * @returns {CanvasRenderingContext2D|null} The canvas context or null if not found
+   * Finds the canvas context as fallback if not directly set
+   * @returns {CanvasRenderingContext2D|null} The canvas context or null
    */
   findCanvasContext() {
     if (this.ctx) return this.ctx;
@@ -653,5 +199,56 @@ class Character extends MovableObject {
     if (this.world?.canvas) return this.world.canvas.getContext("2d");
     const canvas = document.querySelector("canvas");
     return canvas?.getContext("2d") || null;
+  }
+
+  // WICHTIG: Alle möglichen Varianten der hit() Methode für Debugging
+  
+  /**
+   * Main hit method - delegates to health handler
+   * This should be called by collision detection
+   */
+  hit() {
+    console.log("Character.hit() called!"); // Debug
+    this.health.hit();
+  }
+
+  /**
+   * Alternative hit method name (falls dein System das verwendet)
+   */
+  takeDamage(damage = 20) {
+    console.log("Character.takeDamage() called with damage:", damage); // Debug
+    this.health.forceDamage(damage);
+  }
+
+  /**
+   * Another possible hit method name
+   */
+  getHit() {
+    console.log("Character.getHit() called!"); // Debug
+    this.health.hit();
+  }
+
+  /**
+   * Manual damage for testing
+   */
+  testDamage() {
+    console.log("TEST: Applying damage manually");
+    this.energy -= 20;
+    console.log("Energy after test damage:", this.energy);
+    if (this.world && this.world.statusBar) {
+      this.world.statusBar.setPercentage(this.energy);
+    }
+  }
+
+  // Delegate methods to handlers
+  throwBottle() { this.actions.throwBottle(); }
+  collectCoin() { this.actions.collectCoin(); }
+  collectBottle() { this.actions.collectBottle(); }
+  setHealth(health) { this.health.setHealth(health); }
+  heal(amount) { this.health.heal(amount); }
+
+  // Cleanup method
+  destroy() {
+    this.animations.stopAnimationWatcher();
   }
 }
