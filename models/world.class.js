@@ -49,7 +49,7 @@ class World {
     this.ctx = canvas.getContext("2d");
     this.canvas = canvas;
     this.keyboard = keyboard;
-    this.jumpOnChickenSound = new Audio("audio/jump-on-chicken.mp4");
+    playSound("jump-on-chicken.mp4");
     window.character = this.character;
     this.level = level1;
     this.setWorld();
@@ -248,8 +248,7 @@ class World {
       enemy.hit();
       this.character.speedY = 20;
       this.character.x += this.character.x < enemy.x ? -15 : 15;
-      this.jumpOnChickenSound.currentTime = 0;
-      this.jumpOnChickenSound.play();
+      playSound("jump-on-chicken.mp4");
     } else if (!this.character.isHurt()) {
       this.character.hit();
       this.statusBar.setPercentage(this.character.energy);
@@ -291,7 +290,6 @@ class World {
       this.character.y + 100,
       this.character.otherDirection
     );
-
     this.throwableObjects.push(bottle);
     this.character.collectedBottles--;
     this.lastBottleThrow = Date.now();

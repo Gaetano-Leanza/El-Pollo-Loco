@@ -429,7 +429,7 @@ class Character extends MovableObject {
 
     if (this.world.keyboard.SPACE && !this.isAboveGround()) {
       this.jump();
-         playSound('jump.mp4');
+      playSound("jump.mp4");
 
       return true;
     }
@@ -489,22 +489,22 @@ class Character extends MovableObject {
    * @param {Function} setHurtCallback - Callback function to set hurt state
    * @returns {boolean} True if hurt animation is playing, false otherwise
    */
- handleHurtAnimation(setHurtCallback) {
+  handleHurtAnimation(setHurtCallback) {
     if (this.isDying) return false;
 
     if (this.isHurt()) {
-        this.playAnimation(this.IMAGES_HURT);
-        setHurtCallback();
-        if (!this.hurt_sound_played) {
-            playSound('hurt-character.mp4');
-            this.hurt_sound_played = true;
-        }
-        return true;
+      this.playAnimation(this.IMAGES_HURT);
+      setHurtCallback();
+      if (!this.hurt_sound_played) {
+        playSound("hurt-character.mp4");
+        this.hurt_sound_played = true;
+      }
+      return true;
     } else {
-        this.hurt_sound_played = false;
+      this.hurt_sound_played = false;
     }
     return false;
-}
+  }
 
   /**
    * Handles jumping animation when character is airborne.
@@ -773,27 +773,27 @@ class Character extends MovableObject {
     return false;
   }
 
-/**
- * Spielt die Todesanimation ab und verwendet die globale playSound Funktion
- */
-playDeathAnimation() {
+  /**
+   * Spielt die Todesanimation ab und verwendet die globale playSound Funktion
+   */
+  playDeathAnimation() {
     // Verwende die globale playSound Funktion statt direktem Audio-Objekt
     playSound("death-scream.mp4");
 
     let currentFrame = 0;
     const animationInterval = setInterval(() => {
-        if (currentFrame < this.IMAGES_DEAD.length) {
-            this.img = this.imageCache[this.IMAGES_DEAD[currentFrame]];
-            currentFrame++;
-        } else {
-            clearInterval(animationInterval);
-            this.gameOverHandler.world = this.world;
-            this.gameOverHandler.ctx = this.ctx || this.findCanvasContext();
-            this.gameOverHandler.canvas = this.canvas;
-            this.gameOverHandler.showGameOverScreen();
-        }
+      if (currentFrame < this.IMAGES_DEAD.length) {
+        this.img = this.imageCache[this.IMAGES_DEAD[currentFrame]];
+        currentFrame++;
+      } else {
+        clearInterval(animationInterval);
+        this.gameOverHandler.world = this.world;
+        this.gameOverHandler.ctx = this.ctx || this.findCanvasContext();
+        this.gameOverHandler.canvas = this.canvas;
+        this.gameOverHandler.showGameOverScreen();
+      }
     }, Character.DEATH_ANIMATION_FRAME_DURATION);
-}
+  }
 
   /**
    * Finds the canvas context as fallback if not directly set

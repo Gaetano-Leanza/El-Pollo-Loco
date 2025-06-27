@@ -1,27 +1,4 @@
 /**
- * Globaler Sound-Manager für das Spiel, steuert, ob Sounds abgespielt werden dürfen.
- */
-class SoundManager {
-  /**
-   * Gibt an, ob Sounds aktiviert sind.
-   * @type {boolean}
-   */
-  static enabled = false;
-
-  /**
-   * Aktiviert die Sounds (z.B. nach Nutzerinteraktion).
-   */
-  static enable() {
-    this.enabled = true;
-  }
-}
-
-// Event-Listener, die bei Nutzerinteraktion die Sounds freischalten.
-// Soll nur einmal im Spiel (z.B. in game.js) hinzugefügt werden.
-document.addEventListener('click', () => SoundManager.enable());
-document.addEventListener('keydown', () => SoundManager.enable());
-
-/**
  * Basisklasse für Hühner, erbt von MovableObject.
  * Unterstützt Bewegung, Animation und einen loopenden Clucking-Sound.
  * @extends MovableObject
@@ -38,12 +15,6 @@ class BaseChicken extends MovableObject {
    * @type {boolean}
    */
   shouldBeRemoved = false;
-
-  /**
-   * Audio-Element für den Clucking-Sound.
-   * @type {HTMLAudioElement}
-   */
-  cluckingSound;
 
   /**
    * Erstellt ein neues BaseChicken-Objekt.
@@ -65,28 +36,7 @@ class BaseChicken extends MovableObject {
     this.IMAGES_DEAD = [deadImage];
     this.loadImage(this.IMAGES_WALKING[0]);
     this.loadImages(this.IMAGES_WALKING);
-
-    // Sound vorbereiten, aber nicht sofort abspielen (Autoplay Policy)
-    this.cluckingSound = new Audio('audio/chicken-cluking.mp4');
-    this.cluckingSound.loop = true;
-    this.cluckingSound.volume = 0.1;
-
     this.animate();
-  }
-
-  /**
-   * Versucht den Clucking-Sound abzuspielen, wenn Sounds aktiviert und Huhn lebendig ist.
-   */
-  playSound() {
-    if (
-      !SoundManager.enabled ||       // Sounds nicht aktiviert
-      this.isDead ||                 // Huhn ist tot
-      this.cluckingSound.paused === false // Sound läuft schon
-    ) return;
-
-    this.cluckingSound.play().catch(e => {
-      console.warn("Chicken-Sound konnte nicht gestartet werden:", e.name);
-    });
   }
 
   /**
@@ -100,11 +50,6 @@ class BaseChicken extends MovableObject {
         this.playAnimation(this.IMAGES_WALKING);
       }
     }, 200);
-
-    // Überprüft alle 500ms, ob Sound abgespielt werden soll
-    this.soundInterval = setInterval(() => {
-      this.playSound();
-    }, 500);
   }
 
   /**
@@ -114,11 +59,6 @@ class BaseChicken extends MovableObject {
     clearInterval(this.moveInterval);
     clearInterval(this.walkInterval);
     clearInterval(this.soundInterval);
-
-    if (this.cluckingSound) {
-      this.cluckingSound.pause();
-      this.cluckingSound.currentTime = 0;
-    }
   }
 
   /**

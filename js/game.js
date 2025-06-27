@@ -4,9 +4,11 @@ let world;
 let keyboard = new Keyboard();
 let isMuted = false;
 let muteInitialized = false;
-const soundCache = {}; // NEU: Zwischenspeicher für Sounds
+const soundCache = {}; // Sound-Dateien werden hier zwischengespeichert
 
-// Initialisierung beim Start
+/**
+ * Initialisierung beim Start
+ */
 document.addEventListener("DOMContentLoaded", () => {
   loadMuteState();
 });
@@ -24,10 +26,9 @@ function init() {
 
 /**
  * Spielt einen Sound ab, sofern nicht stummgeschaltet. Nutzt Caching.
+ * Unterstützt gleichzeitige Wiedergabe durch cloneNode + muting.
  */
 function playSound(soundFile) {
-  if (isMuted) return;
-
   const fullPath = soundFile.startsWith('sounds/') ? soundFile : `sounds/${soundFile}`;
 
   if (!soundCache[fullPath]) {
@@ -36,7 +37,9 @@ function playSound(soundFile) {
     soundCache[fullPath] = audio;
   }
 
-  const sound = soundCache[fullPath].cloneNode(); // Klonen für gleichzeitige Wiedergabe
+  const sound = soundCache[fullPath].cloneNode(); // Für gleichzeitige Wiedergabe
+  sound.muted = isMuted; // WICHTIG: Sound stummschalten, falls nötig
+  sound.volume = 1;      // Optional: Lautstärke setzen (zwischen 0 und 1)
   sound.play().catch((e) => {
     if (e.name !== "AbortError") console.warn("Sound error:", e);
   });
@@ -54,7 +57,7 @@ function initMuteSystem() {
 }
 
 /**
- * Lädt den gespeicherten Mute-Status
+ * Lädt den gespeicherten Mute-Status aus dem localStorage
  */
 function loadMuteState() {
   try {
@@ -68,7 +71,7 @@ function loadMuteState() {
 }
 
 /**
- * Schaltet den Mute-Status um
+ * Schaltet den Mute-Status um und speichert ihn
  */
 function toggleMute() {
   isMuted = !isMuted;
@@ -111,12 +114,12 @@ window.addEventListener('load', () => {
   console.log("Initial mute state:", isMuted);
 });
 
+
 // Startscreen & Game-Logik
 function showStartScreen() {
   if (world) resetGame();
   canvas = document.getElementById("canvas");
   const ctx = canvas.getContext("2d");
-  loadMuteState();
   drawStartImage(ctx);
 }
 
