@@ -121,8 +121,6 @@ function updateMuteUI() {
   }
 }
 
-// ENTFERNT: Das window load Event, da es zu doppelten Event-Listenern führt
-// window.addEventListener('load', () => { ... });
 
 // Startscreen & Game-Logik
 function showStartScreen() {

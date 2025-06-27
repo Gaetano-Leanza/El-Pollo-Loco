@@ -137,6 +137,9 @@ class Endboss extends MovableObject {
   /** @type {number} Maximum number of hits before death */
   maxHits = 5;
 
+  /** @type {boolean} Flag to prevent multiple death animations */
+  deathAnimationStarted = false;
+
   /**
    * Creates a new Endboss instance
    * @constructor
@@ -146,6 +149,7 @@ class Endboss extends MovableObject {
     this.maxEnergy = 100;
     this.energy = this.maxEnergy;
     this.isDead = false;
+    this.deathAnimationStarted = false;
     if (this.endboss) {
       this.endboss.worldReference = this;
     }
@@ -171,6 +175,15 @@ class Endboss extends MovableObject {
   loadVictoryImage() {
     this.victoryImage = new Image();
     this.victoryImage.src = "img/You won, you lost/You won A.png";
+    
+    // Ensure image is loaded before using it
+    this.victoryImage.onload = () => {
+      console.log("Victory image loaded successfully");
+    };
+    
+    this.victoryImage.onerror = () => {
+      console.error("Failed to load victory image");
+    };
   }
 
   /**
@@ -179,8 +192,13 @@ class Endboss extends MovableObject {
    */
   animate() {
     this.animationInterval = setInterval(() => {
-      if (this.isDead) {
+      if (this.isDead && !this.deathAnimationStarted) {
+        // Only trigger death animation once
+        this.deathAnimationStarted = true;
         this.playDeathAnimation();
+      } else if (this.isDead) {
+        // Continue showing death animation frames
+        this.playAnimation(this.IMAGES_DEAD);
       } else if (this.isHurt) {
         this.playHurtAnimation();
       } else if (this.isAttacking) {
@@ -411,17 +429,15 @@ class Endboss extends MovableObject {
    * Plays the death animation and handles victory sequence
    */
   playDeathAnimation() {
-    this.victorySound
-      .play()
-      .catch((e) =>
-        console.warn("Sieges-Sound konnte nicht abgespielt werden:", e)
-      );
+    console.log("Death animation started");
 
+    // Play death animation frames
     this.playAnimation(this.IMAGES_DEAD);
 
+    // Set timeout to show victory screen after death animation
     setTimeout(() => {
-      clearInterval(this.animationInterval);
-      cancelAnimationFrame(this.movementAnimationId);
+      console.log("Starting victory sequence");
+      this.stopAllAnimations();
       this.shouldBeRemoved = true;
       this.showVictoryScreen = true;
       this.displayVictoryScreen();
@@ -429,17 +445,46 @@ class Endboss extends MovableObject {
   }
 
   /**
+   * Stops all animations and intervals
+   */
+  stopAllAnimations() {
+    if (this.animationInterval) {
+      clearInterval(this.animationInterval);
+      this.animationInterval = null;
+    }
+    if (this.movementAnimationId) {
+      cancelAnimationFrame(this.movementAnimationId);
+      this.movementAnimationId = null;
+    }
+  }
+
+  /**
    * Displays the victory screen
    */
   displayVictoryScreen() {
+    console.log("Displaying victory screen");
+    
     const ctx = this.findCanvasContext();
-    if (!this.victoryImage || !ctx) return;
+    if (!ctx) {
+      console.error("No canvas context found for victory screen");
+      // Fallback: restart game anyway
+      this.scheduleVictoryScreenEnd();
+      return;
+    }
+
+    if (!this.victoryImage) {
+      console.error("Victory image not loaded");
+      // Fallback: restart game anyway
+      this.scheduleVictoryScreenEnd();
+      return;
+    }
 
     const canvas = ctx.canvas;
     const { x, y, width, height } = this.calculateCenteredImageBounds(canvas);
 
-    const draw = () =>
+    const draw = () => {
       this.drawVictoryOverlay(ctx, canvas, x, y, width, height);
+    };
 
     const loop = () => {
       if (this.showVictoryScreen) {
@@ -448,8 +493,10 @@ class Endboss extends MovableObject {
       }
     };
 
+    // Start the victory screen loop
     loop();
 
+    // Schedule the end of victory screen
     this.scheduleVictoryScreenEnd();
   }
 
@@ -486,8 +533,11 @@ class Endboss extends MovableObject {
    * @param {number} height Image height
    */
   drawVictoryOverlay(ctx, canvas, x, y, width, height) {
+    // Draw semi-transparent background
     ctx.fillStyle = "rgba(0, 0, 0, 0.7)";
     ctx.fillRect(0, 0, canvas.width, canvas.height);
+    
+    // Draw victory image
     ctx.drawImage(this.victoryImage, x, y, width, height);
   }
 
@@ -495,17 +545,25 @@ class Endboss extends MovableObject {
    * Schedules the end of victory screen display
    */
   scheduleVictoryScreenEnd() {
+    console.log("Scheduling victory screen end in 3 seconds");
     setTimeout(() => {
+      console.log("Victory screen ending, reloading page");
       this.showVictoryScreen = false;
       this.reloadPage();
-    }, 2000);
+    }, 3000); // Increased to 3 seconds for better visibility
   }
 
   /**
    * Reloads the game page
    */
   reloadPage() {
-    window.location.reload();
+    try {
+      window.location.reload();
+    } catch (e) {
+      console.error("Could not reload page:", e);
+      // Alternative: redirect to current page
+      window.location.href = window.location.href;
+    }
   }
 
   /**
@@ -513,6 +571,8 @@ class Endboss extends MovableObject {
    */
   hit() {
     if (this.isDead || !this.canBeHit()) return;
+
+    console.log(`Endboss hit! Hit counter: ${this.hitCounter + 1}/${this.maxHits}`);
 
     this.registerHit();
     this.updateEnergy();
@@ -561,19 +621,25 @@ class Endboss extends MovableObject {
   /**
    * Plays hurt sound effect
    */
- playHurtSound() {
-  playSound("hurt-endboss.mp4", 0.6);
-}
-
+  playHurtSound() {
+    try {
+      if (typeof playSound === 'function') {
+        playSound("hurt-endboss.mp4", 0.6);
+      }
+    } catch (e) {
+      console.warn("Hurt sound could not be played:", e);
+    }
+  }
 
   /**
    * Evaluates if endboss should die or just be hurt
    */
   evaluateDeathOrHurt() {
     if (this.hitCounter >= this.maxHits) {
+      console.log("Endboss defeated!");
       this.energy = 0;
       this.isDead = true;
-      this.playDeathAnimation();
+      // Don't call playDeathAnimation here - let animate() handle it
     } else {
       this.isHurt = true;
       this.hurtAnimationPlaying = false;
@@ -599,13 +665,29 @@ class Endboss extends MovableObject {
    * @returns {CanvasRenderingContext2D|null} Canvas context or null if not found
    */
   findCanvasContext() {
-    if (typeof world !== "undefined" && world?.ctx) return world.ctx;
-    if (window.canvas?.getContext) return window.canvas.getContext("2d");
-    if (document.querySelector("canvas"))
-      return document.querySelector("canvas").getContext("2d");
-    if (window.ctx) return window.ctx;
+    // Try multiple methods to find canvas context
+    if (typeof world !== "undefined" && world?.ctx) {
+      console.log("Found canvas context via world.ctx");
+      return world.ctx;
+    }
+    
+    if (window.canvas?.getContext) {
+      console.log("Found canvas context via window.canvas");
+      return window.canvas.getContext("2d");
+    }
+    
+    const canvasElement = document.querySelector("canvas");
+    if (canvasElement) {
+      console.log("Found canvas context via document.querySelector");
+      return canvasElement.getContext("2d");
+    }
+    
+    if (window.ctx) {
+      console.log("Found canvas context via window.ctx");
+      return window.ctx;
+    }
 
-    console.error("Kein Canvas Context gefunden!");
+    console.error("No canvas context found!");
     return null;
   }
 
