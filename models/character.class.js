@@ -32,18 +32,6 @@ class Character extends MovableObject {
   static DEATH_ANIMATION_FRAME_DURATION = 150;
 
   /**
-   * Time in milliseconds to display game over screen
-   * @static {number}
-   */
-  static GAME_OVER_DISPLAY_TIME = 3000;
-
-  /**
-   * Scale factor for canvas overlay images (0.8 = 80% of canvas size)
-   * @static {number}
-   */
-  static CANVAS_SCALE = 0.8;
-
-  /**
    * Character sprite height in pixels
    * @type {number}
    */
@@ -140,16 +128,10 @@ class Character extends MovableObject {
   deathAnimationStarted = false;
 
   /**
-   * Flag indicating if game over overlay should be shown
-   * @type {boolean}
-   */
-  showGameOverOverlay = false;
-
-  /**
    * Flag to prevent multiple hurt sound plays
    * @type {boolean}
    */
-  hurt_sound_played = false;
+  hurtSoundPlayed = false;
 
   /**
    * Reference to the game world object
@@ -168,42 +150,6 @@ class Character extends MovableObject {
    * @type {HTMLCanvasElement}
    */
   canvas;
-
-  /**
-   * Lazy-loaded hurt sound audio object.
-   * Creates and caches audio instance on first access.
-   * @returns {Audio} The hurt sound audio object
-   */
-  get hurt_sound() {
-    if (!this._hurt_sound) {
-      this._hurt_sound = playSound("hurt-character.mp4");
-    }
-    return this._hurt_sound;
-  }
-
-  /**
-   * Lazy-loaded jump sound audio object.
-   * Creates and caches audio instance on first access.
-   * @returns {Audio} The jump sound audio object
-   */
-  get jump_sound() {
-    if (!this._jump_sound) {
-      this._jump_sound = playSound("jump.mp4");
-    }
-    return this._jump_sound;
-  }
-
-  /**
-   * Lazy-loaded death sound audio object.
-   * Creates and caches audio instance on first access.
-   * @returns {Audio} The death sound audio object
-   */
-  get death_sound() {
-    if (!this._death_sound) {
-      this._death_sound = playSound("death.mp4");
-    }
-    return this._death_sound;
-  }
 
   /**
    * Array of walking animation image paths
@@ -325,57 +271,15 @@ class Character extends MovableObject {
   }
 
   /**
-   * Sets the canvas rendering context for the character.
+   * Sets the canvas rendering context for the character and game over handler.
    * Stores references to both context and canvas for rendering operations.
    * @param {CanvasRenderingContext2D} ctx - The 2D rendering context
    */
   setCanvasContext(ctx) {
     this.ctx = ctx;
     this.canvas = ctx.canvas;
-  }
-
-  /**
-   * Calculates centered positioning and scaling for overlay images.
-   * Maintains aspect ratio while fitting image within canvas bounds.
-   * @param {HTMLCanvasElement} canvas - The target canvas element
-   * @param {HTMLImageElement} image - The image to be centered
-   * @returns {Object} Object containing x, y, width, height properties for positioning
-   */
-  calculateCenteredImageBounds(canvas, image) {
-    const canvasRatio = canvas.width / canvas.height;
-    const imageRatio = image.width / image.height;
-
-    let width, height;
-
-    if (imageRatio > canvasRatio) {
-      width = canvas.width * Character.CANVAS_SCALE;
-      height = width / imageRatio;
-    } else {
-      height = canvas.height * Character.CANVAS_SCALE;
-      width = height * imageRatio;
-    }
-
-    const x = (canvas.width - width) / 2;
-    const y = (canvas.height - height) / 2;
-
-    return { x, y, width, height };
-  }
-
-  /**
-   * Draws an overlay with semi-transparent background and centered image.
-   * Used for game over screens and victory displays.
-   * @param {CanvasRenderingContext2D} ctx - The rendering context
-   * @param {HTMLCanvasElement} canvas - The canvas element
-   * @param {HTMLImageElement} image - The overlay image
-   * @param {number} x - X position for image
-   * @param {number} y - Y position for image
-   * @param {number} width - Width for image
-   * @param {number} height - Height for image
-   */
-  drawOverlay(ctx, canvas, image, x, y, width, height) {
-    ctx.fillStyle = "rgba(0, 0, 0, 0.7)";
-    ctx.fillRect(0, 0, canvas.width, canvas.height);
-    ctx.drawImage(image, x, y, width, height);
+    this.gameOverHandler.ctx = ctx;
+    this.gameOverHandler.canvas = ctx.canvas;
   }
 
   /**
@@ -430,7 +334,6 @@ class Character extends MovableObject {
     if (this.world.keyboard.SPACE && !this.isAboveGround()) {
       this.jump();
       playSound("jump.mp4");
-
       return true;
     }
     return isMoving;
@@ -462,22 +365,15 @@ class Character extends MovableObject {
    * Handles death, hurt, jumping, walking, and idle animations with priority system.
    */
   startAnimationWatcher() {
-    let wasHurt = false;
-
     this.idleInterval = setInterval(() => {
-      if (
-        this.handleDeathAnimation() ||
-        this.handleHurtAnimation(() => (wasHurt = true)) ||
-        this.handleJumpingAnimation() ||
-        this.handleWalkingAnimation() ||
-        this.isThrowingBottle
-      ) {
-        if (!this.handleHurtAnimation(() => (wasHurt = true))) {
-          wasHurt = false;
-        }
-        return;
-      }
+      // Priority-based animation handling
+      if (this.handleDeathAnimation()) return;
+      if (this.handleHurtAnimation()) return;
+      if (this.handleJumpingAnimation()) return;
+      if (this.handleWalkingAnimation()) return;
+      if (this.isThrowingBottle) return;
 
+      // Handle idle animations if no other animation is active
       const idleTime = Date.now() - this.lastMoveTime;
       this.handleIdleAnimations(idleTime);
     }, Character.ANIMATION_INTERVAL);
@@ -486,24 +382,22 @@ class Character extends MovableObject {
   /**
    * Handles hurt animation and sound effects.
    * Prevents animation during death state and manages sound playback.
-   * @param {Function} setHurtCallback - Callback function to set hurt state
    * @returns {boolean} True if hurt animation is playing, false otherwise
    */
-  handleHurtAnimation(setHurtCallback) {
+  handleHurtAnimation() {
     if (this.isDying) return false;
 
     if (this.isHurt()) {
       this.playAnimation(this.IMAGES_HURT);
-      setHurtCallback();
-      if (!this.hurt_sound_played) {
+      if (!this.hurtSoundPlayed) {
         playSound("hurt-character.mp4");
-        this.hurt_sound_played = true;
+        this.hurtSoundPlayed = true;
       }
       return true;
     } else {
-      this.hurt_sound_played = false;
+      this.hurtSoundPlayed = false;
+      return false;
     }
-    return false;
   }
 
   /**
@@ -633,9 +527,7 @@ class Character extends MovableObject {
 
   /**
    * Increases the character's collected coin counter by one.
-   * Optionally resets the idle timer to prevent idle behavior after collecting a coin.
-   *
-   * @returns {void}
+   * Resets the idle timer to prevent idle behavior after collecting a coin.
    */
   collectCoin() {
     this.collectedCoins++;
@@ -681,36 +573,20 @@ class Character extends MovableObject {
   }
 
   /**
-   * Checks various death conditions and triggers death if any are met.
-   * Checks energy, health, and status bar values.
+   * Checks if character should die based on energy, health, or status bar values.
+   * Consolidated death condition checking.
    */
   checkForDeath() {
     if (this.isDying) return;
 
-    const isDead =
-      this.isDeadByEnergy() ||
-      this.isDeadByHealth() ||
+    const isDead = 
+      (this.energy !== undefined && this.energy <= 15) ||
+      (this.health !== undefined && this.health <= 15) ||
       this.isDeadByStatusBar();
 
     if (isDead) {
       this.triggerDeath();
     }
-  }
-
-  /**
-   * Checks if character is dead based on energy level.
-   * @returns {boolean} True if dead by energy, false otherwise
-   */
-  isDeadByEnergy() {
-    return this.energy !== undefined && this.energy <= 15;
-  }
-
-  /**
-   * Checks if character is dead based on health level.
-   * @returns {boolean} True if dead by health, false otherwise
-   */
-  isDeadByHealth() {
-    return this.health !== undefined && this.health <= 15;
   }
 
   /**
@@ -730,34 +606,6 @@ class Character extends MovableObject {
   }
 
   /**
-   * Displays the victory screen overlay with centered image.
-   * Schedules automatic screen dismissal after display time.
-   */
-  displayVictoryScreen() {
-    const ctx = this.findCanvasContext();
-    if (!this.victoryImage || !ctx) return;
-
-    const canvas = ctx.canvas;
-    const bounds = this.calculateCenteredImageBounds(canvas, this.victoryImage);
-
-    this.showVictoryScreen = true;
-    this.animateScreen(
-      () => this.showVictoryScreen,
-      () =>
-        this.drawOverlay(
-          ctx,
-          canvas,
-          this.victoryImage,
-          bounds.x,
-          bounds.y,
-          bounds.width,
-          bounds.height
-        )
-    );
-    this.scheduleVictoryScreenEnd();
-  }
-
-  /**
    * Handles the death animation sequence.
    * Starts animation if not already started and character is dead.
    * @returns {boolean} True if death animation is active, false otherwise
@@ -774,10 +622,10 @@ class Character extends MovableObject {
   }
 
   /**
-   * Spielt die Todesanimation ab und verwendet die globale playSound Funktion
+   * Plays the death animation sequence and handles game over screen.
+   * Uses global playSound function for death sound effect.
    */
   playDeathAnimation() {
-    // Verwende die globale playSound Funktion statt direktem Audio-Objekt
     playSound("death-scream.mp4");
 
     let currentFrame = 0;
@@ -796,7 +644,7 @@ class Character extends MovableObject {
   }
 
   /**
-   * Finds the canvas context as fallback if not directly set
+   * Finds the canvas context as fallback if not directly set.
    * @returns {CanvasRenderingContext2D|null} The canvas context or null if not found
    */
   findCanvasContext() {
@@ -805,16 +653,5 @@ class Character extends MovableObject {
     if (this.world?.canvas) return this.world.canvas.getContext("2d");
     const canvas = document.querySelector("canvas");
     return canvas?.getContext("2d") || null;
-  }
-
-  /**
-   * Sets the canvas context and passes it to game over handler
-   * @param {CanvasRenderingContext2D} ctx - The 2D rendering context
-   */
-  setCanvasContext(ctx) {
-    this.ctx = ctx;
-    this.canvas = ctx.canvas;
-    this.gameOverHandler.ctx = ctx;
-    this.gameOverHandler.canvas = ctx.canvas;
   }
 }

@@ -47,60 +47,52 @@ function playSound(soundFile) {
 }
 
 /**
- * Initialisiert das Mute-System - NUR EINMAL
- */
-function initMuteSystem() {
-  if (muteInitialized) {
-    console.log("Mute system already initialized");
-    return;
-  }
-  muteInitialized = true;
-  console.log("Initializing mute system...");
-
-  // Event-Listener für Mute-Button hinzufügen
-  const muteButton = document.getElementById('muteButton');
-  if (muteButton) {
-    // Alle bestehenden Event-Listener entfernen (falls vorhanden)
-    muteButton.removeEventListener('click', toggleMute);
-    // Neuen Event-Listener hinzufügen
-    muteButton.addEventListener('click', toggleMute);
-    console.log("Mute button event listener added");
-  } else {
-    console.warn("Mute button not found");
-  }
-
-  updateMuteUI();
-}
-
-/**
  * Lädt den gespeicherten Mute-Status aus dem localStorage
  */
 function loadMuteState() {
-  try {
-    const saved = localStorage.getItem('gameMuted');
-    isMuted = saved === 'true';
-    console.log("Mute state loaded:", isMuted);
-  } catch (e) {
-    console.warn("LocalStorage error:", e);
-    isMuted = false;
-  }
+  const savedMute = localStorage.getItem('gameMuted');
+  isMuted = savedMute === 'true'; // Nur wenn explizit 'true' gespeichert ist
+  console.log("Mute state loaded:", isMuted);
 }
 
+/**
+ * Initialisiert das Mute-System - NUR EINMAL
+ */
+function initMuteSystem() {
+  if (muteInitialized) return;
+
+  const muteButton = document.getElementById('muteButton');
+  if (!muteButton) return;
+
+  // 1. Alte Event-Listener entfernen (falls vorhanden)
+  const newButton = muteButton.cloneNode(true);
+  muteButton.parentNode.replaceChild(newButton, muteButton);
+
+  // 2. Nur Click-Listener (keine Tastatur-Events)
+  newButton.addEventListener('click', toggleMute);
+
+  // 3. Sicherheitshalber: Tastatur-Events blockieren
+  newButton.addEventListener('keydown', (e) => {
+    if (['Enter', 'Space', ' '].includes(e.key)) {
+      e.preventDefault(); // Blockiert Enter/Leertaste
+    }
+  });
+
+  muteInitialized = true;
+  updateMuteUI(); // Initialen Zustand anzeigen
+}
 /**
  * Schaltet den Mute-Status um und speichert ihn
  */
 function toggleMute() {
-  console.log("toggleMute called - current state:", isMuted);
   isMuted = !isMuted;
-  console.log("Mute toggled to:", isMuted);
-
-  try {
-    localStorage.setItem('gameMuted', isMuted.toString());
-  } catch (e) {
-    console.warn("Could not save mute state:", e);
-  }
-
+  localStorage.setItem('gameMuted', isMuted.toString());
   updateMuteUI();
+  
+  // Alle gecachten Sounds muten/unmuten
+  Object.values(soundCache).forEach(sound => {
+    sound.muted = isMuted;
+  });
 }
 
 /**
@@ -120,7 +112,6 @@ function updateMuteUI() {
     muteIcon.textContent = isMuted ? "🔇" : "🔊";
   }
 }
-
 
 // Startscreen & Game-Logik
 function showStartScreen() {
@@ -171,10 +162,6 @@ function handleKeyDown(e) {
     case 32: keyboard.SPACE = true; break;
     case 68: keyboard.D = true; break;
     case 70: toggleFullscreen(canvas); break;
-    case 77: 
-      console.log("M key pressed - calling toggleMute");
-      toggleMute(); 
-      break; // M-Taste für Mute
   }
 }
 

@@ -136,6 +136,8 @@ canvas {
   transition: all 0.2s ease-in-out;
   text-transform: uppercase;
   letter-spacing: 1px;
+  outline: none; /* Entfernt den blauen Fokus-Ring */
+  user-select: none; /* Verhindert Textauswahl beim Klicken */
 }
 
 #muteButton:hover {
@@ -143,7 +145,6 @@ canvas {
   box-shadow: 0 4px 0 #b97a00;
   transform: translateY(4px);
 }
-
 
 .footer-link {
   position: fixed;
