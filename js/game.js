@@ -86,8 +86,7 @@ function playSound(soundFile) {
  */
 function loadMuteState() {
   const savedMute = localStorage.getItem("gameMuted");
-  isMuted = savedMute === "true"; // Nur wenn explizit 'true' gespeichert ist
-  console.log("Mute state loaded:", isMuted);
+  isMuted = savedMute === "true"; 
 }
 
 /**

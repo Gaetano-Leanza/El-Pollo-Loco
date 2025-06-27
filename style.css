@@ -251,7 +251,6 @@ canvas {
     user-select: none;
   }
 
-  /* Desktop Button auf Touch-Geräten verstecken */
   #muteButton {
     display: none !important;
   }
@@ -300,18 +299,15 @@ canvas {
     display: none !important;
   }
   
-  /* Mobile Button auf Desktop verstecken */
   #muteButtonMobile {
     display: none !important;
   }
 }
 
-/* Mobile Button - standardmäßig versteckt */
 #muteButtonMobile {
   display: none;
 }
 
-/* Mobile Button nur auf Touch-Geräten anzeigen */
 @media (pointer: coarse) {
   #muteButtonMobile {
     display: inline-flex !important;

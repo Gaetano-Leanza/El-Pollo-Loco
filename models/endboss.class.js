@@ -4,22 +4,22 @@
  * like walking, alert, attacking, being hurt, and dying.
  */
 class Endboss extends MovableObject {
-  /** @type {number} Height of the endboss in pixels */
+  // Height of the endboss in pixels
   height = 400;
 
-  /** @type {number} Width of the endboss in pixels */
+  // Width of the endboss in pixels
   width = 250;
 
-  /** @type {number} Movement speed of the endboss */
+  // Movement speed of the endboss
   speed = 0.2;
 
-  /** @type {number} Vertical position of the endboss */
+  // Vertical position of the endboss
   y = 62;
 
-  /** @type {number} Horizontal position of the endboss */
+  // Horizontal position of the endboss
   x = 3800;
 
-  /** @type {string[]} Array of image paths for walking animation */
+  // Array of image paths for walking animation
   IMAGES_WALK = [
     "img/4_enemie_boss_chicken/1_walk/G1.png",
     "img/4_enemie_boss_chicken/1_walk/G2.png",
@@ -27,7 +27,7 @@ class Endboss extends MovableObject {
     "img/4_enemie_boss_chicken/1_walk/G4.png",
   ];
 
-  /** @type {string[]} Array of image paths for alert animation */
+  // Array of image paths for alert animation
   IMAGES_ALERT = [
     "img/4_enemie_boss_chicken/2_alert/G5.png",
     "img/4_enemie_boss_chicken/2_alert/G6.png",
@@ -39,7 +39,7 @@ class Endboss extends MovableObject {
     "img/4_enemie_boss_chicken/2_alert/G12.png",
   ];
 
-  /** @type {string[]} Array of image paths for attack animation */
+  // Array of image paths for attack animation
   IMAGES_ATTACK = [
     "img/4_enemie_boss_chicken/3_attack/G13.png",
     "img/4_enemie_boss_chicken/3_attack/G14.png",
@@ -51,98 +51,97 @@ class Endboss extends MovableObject {
     "img/4_enemie_boss_chicken/3_attack/G20.png",
   ];
 
-  /** @type {string[]} Array of image paths for hurt animation */
+  // Array of image paths for hurt animation
   IMAGES_HURT = [
     "img/4_enemie_boss_chicken/4_hurt/G21.png",
     "img/4_enemie_boss_chicken/4_hurt/G22.png",
     "img/4_enemie_boss_chicken/4_hurt/G23.png",
   ];
 
-  /** @type {string[]} Array of image paths for death animation */
+  // Array of image paths for death animation
   IMAGES_DEAD = [
     "img/4_enemie_boss_chicken/5_dead/G24.png",
     "img/4_enemie_boss_chicken/5_dead/G25.png",
     "img/4_enemie_boss_chicken/5_dead/G26.png",
   ];
 
-  /** @type {boolean} Flag indicating if endboss is hurt */
+  // Flag indicating if endboss is hurt
   isHurt = false;
 
-  /** @type {boolean} Flag indicating if endboss is dead */
+  // Flag indicating if endboss is dead
   isDead = false;
 
-  /** @type {boolean} Flag indicating if endboss is walking */
+  // Flag indicating if endboss is walking
   isWalking = false;
 
-  /** @type {boolean} Flag indicating if endboss is alerted */
+  // Flag indicating if endboss is alerted
   isAlerted = false;
 
-  /** @type {boolean} Flag indicating if endboss is attacking */
+  // Flag indicating if endboss is attacking
   isAttacking = false;
 
-  /** @type {number|undefined} Interval ID for animation loop */
+  // Interval ID for animation loop
   animationInterval;
 
-  /** @type {number|undefined} Animation frame ID for movement */
+  // Animation frame ID for movement
   movementAnimationId;
 
-  /** @type {number} Current frame index for hurt animation */
+  // Current frame index for hurt animation
   hurtFrameIndex = 0;
 
-  /** @type {boolean} Flag indicating if hurt animation is playing */
+  // Flag indicating if hurt animation is playing
   hurtAnimationPlaying = false;
 
-  /** @type {number} Current frame index for general animation */
+  // Current frame index for general animation
   currentFrameIndex = 0;
 
-  /** @type {boolean} Flag indicating if endboss is jumping */
+  // Flag indicating if endboss is jumping
   isJumping = false;
 
-  /** @type {number} Y-coordinate where jump started */
+  // Y-coordinate where jump started
   jumpStartY = 0;
 
-  /** @type {number} X-coordinate where jump started */
+  // X-coordinate where jump started
   jumpStartX = 0;
 
-  /** @type {number} X-coordinate where jump will end */
+  // X-coordinate where jump will end
   jumpTargetX = 0;
 
-  /** @type {number} Speed of the jump */
+  // Speed of the jump
   jumpSpeed = 8;
 
-  /** @type {number} Maximum height of the jump */
+  // Maximum height of the jump
   jumpHeight = 150;
 
-  /** @type {number} Current progress of jump (0-1) */
+  // Current progress of jump (0-1)
   jumpProgress = 0;
 
-  /** @type {HTMLImageElement|null} Image to show on victory */
+  // Image to show on victory
   victoryImage = null;
 
-  /** @type {boolean} Flag indicating if victory screen should be shown */
+  // Flag indicating if victory screen should be shown
   showVictoryScreen = false;
 
-  /** @type {number} Current health of endboss */
+  // Current health of endboss
   health = 100;
 
-  /** @type {number} Number of hits taken */
+  // Number of hits taken
   hitCounter = 0;
 
-  /** @type {number} Timestamp of last hit */
+  // Timestamp of last hit
   lastHitTime = 0;
 
-  /** @type {number} Cooldown time between hits in ms */
+  // Cooldown time between hits in ms
   hitCooldown = 500;
 
-  /** @type {number} Maximum number of hits before death */
+  // Maximum number of hits before death
   maxHits = 5;
 
-  /** @type {boolean} Flag to prevent multiple death animations */
+  // Flag to prevent multiple death animations
   deathAnimationStarted = false;
 
   /**
    * Creates a new Endboss instance
-   * @constructor
    */
   constructor() {
     super();
@@ -178,11 +177,11 @@ class Endboss extends MovableObject {
     
     // Ensure image is loaded before using it
     this.victoryImage.onload = () => {
-      console.log("Victory image loaded successfully");
+      // Victory image loaded successfully
     };
     
     this.victoryImage.onerror = () => {
-      console.error("Failed to load victory image");
+      // Failed to load victory image
     };
   }
 
@@ -429,14 +428,11 @@ class Endboss extends MovableObject {
    * Plays the death animation and handles victory sequence
    */
   playDeathAnimation() {
-    console.log("Death animation started");
-
     // Play death animation frames
     this.playAnimation(this.IMAGES_DEAD);
 
     // Set timeout to show victory screen after death animation
     setTimeout(() => {
-      console.log("Starting victory sequence");
       this.stopAllAnimations();
       this.shouldBeRemoved = true;
       this.showVictoryScreen = true;
@@ -462,18 +458,14 @@ class Endboss extends MovableObject {
    * Displays the victory screen
    */
   displayVictoryScreen() {
-    console.log("Displaying victory screen");
-    
     const ctx = this.findCanvasContext();
     if (!ctx) {
-      console.error("No canvas context found for victory screen");
       // Fallback: restart game anyway
       this.scheduleVictoryScreenEnd();
       return;
     }
 
     if (!this.victoryImage) {
-      console.error("Victory image not loaded");
       // Fallback: restart game anyway
       this.scheduleVictoryScreenEnd();
       return;
@@ -545,9 +537,7 @@ class Endboss extends MovableObject {
    * Schedules the end of victory screen display
    */
   scheduleVictoryScreenEnd() {
-    console.log("Scheduling victory screen end in 3 seconds");
     setTimeout(() => {
-      console.log("Victory screen ending, reloading page");
       this.showVictoryScreen = false;
       this.reloadPage();
     }, 3000); // Increased to 3 seconds for better visibility
@@ -560,7 +550,6 @@ class Endboss extends MovableObject {
     try {
       window.location.reload();
     } catch (e) {
-      console.error("Could not reload page:", e);
       // Alternative: redirect to current page
       window.location.href = window.location.href;
     }
@@ -571,8 +560,6 @@ class Endboss extends MovableObject {
    */
   hit() {
     if (this.isDead || !this.canBeHit()) return;
-
-    console.log(`Endboss hit! Hit counter: ${this.hitCounter + 1}/${this.maxHits}`);
 
     this.registerHit();
     this.updateEnergy();
@@ -627,7 +614,7 @@ class Endboss extends MovableObject {
         playSound("hurt-endboss.mp4", 0.6);
       }
     } catch (e) {
-      console.warn("Hurt sound could not be played:", e);
+      // Hurt sound could not be played
     }
   }
 
@@ -636,7 +623,6 @@ class Endboss extends MovableObject {
    */
   evaluateDeathOrHurt() {
     if (this.hitCounter >= this.maxHits) {
-      console.log("Endboss defeated!");
       this.energy = 0;
       this.isDead = true;
       // Don't call playDeathAnimation here - let animate() handle it
@@ -667,27 +653,22 @@ class Endboss extends MovableObject {
   findCanvasContext() {
     // Try multiple methods to find canvas context
     if (typeof world !== "undefined" && world?.ctx) {
-      console.log("Found canvas context via world.ctx");
       return world.ctx;
     }
     
     if (window.canvas?.getContext) {
-      console.log("Found canvas context via window.canvas");
       return window.canvas.getContext("2d");
     }
     
     const canvasElement = document.querySelector("canvas");
     if (canvasElement) {
-      console.log("Found canvas context via document.querySelector");
       return canvasElement.getContext("2d");
     }
     
     if (window.ctx) {
-      console.log("Found canvas context via window.ctx");
       return window.ctx;
     }
 
-    console.error("No canvas context found!");
     return null;
   }
 
