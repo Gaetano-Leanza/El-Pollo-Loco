@@ -58,7 +58,7 @@ function init() {
  * Spielt einen Sound ab, sofern der Sound nicht stummgeschaltet ist.
  * Nutzt einen Cache, um Sounds nicht mehrfach zu laden.
  * Erstellt eine Kopie des Audio-Elements, um gleichzeitiges Abspielen mehrerer Instanzen zu ermöglichen.
- * 
+ *
  * @param {string} soundFile - Pfad zur Audiodatei oder Dateiname im Ordner "sounds".
  */
 function playSound(soundFile) {
@@ -91,7 +91,7 @@ function loadMuteState() {
 }
 
 /**
- * Initialisiert das Mute-System: 
+ * Initialisiert das Mute-System:
  * Bindet den Mute-Button an die Umschaltfunktion und sorgt für korrekte Bedienbarkeit.
  * Führt die Initialisierung nur einmal aus.
  */
@@ -99,18 +99,29 @@ function initMuteSystem() {
   if (muteInitialized) return;
 
   const muteButton = document.getElementById("muteButton");
-  if (!muteButton) return;
+  const muteButtonMobile = document.getElementById("muteButtonMobile");
 
-  const newButton = muteButton.cloneNode(true);
-  muteButton.parentNode.replaceChild(newButton, muteButton);
+  if (muteButton) {
+    const newButton = muteButton.cloneNode(true);
+    muteButton.parentNode.replaceChild(newButton, muteButton);
+    newButton.addEventListener("click", toggleMute);
+    newButton.addEventListener("keydown", (e) => {
+      if (["Enter", "Space", " "].includes(e.key)) {
+        e.preventDefault();
+      }
+    });
+  }
 
-  newButton.addEventListener("click", toggleMute);
-
-  newButton.addEventListener("keydown", (e) => {
-    if (["Enter", "Space", " "].includes(e.key)) {
-      e.preventDefault();
-    }
-  });
+  if (muteButtonMobile) {
+    const newButtonMobile = muteButtonMobile.cloneNode(true);
+    muteButtonMobile.parentNode.replaceChild(newButtonMobile, muteButtonMobile);
+    newButtonMobile.addEventListener("click", toggleMute);
+    newButtonMobile.addEventListener("keydown", (e) => {
+      if (["Enter", "Space", " "].includes(e.key)) {
+        e.preventDefault();
+      }
+    });
+  }
 
   muteInitialized = true;
   updateMuteUI();
@@ -135,17 +146,19 @@ function toggleMute() {
  * Ändert Text, Tooltip und Stil abhängig vom aktuellen Mute-Status.
  */
 function updateMuteUI() {
-  const btn = document.getElementById("muteButton");
-  if (btn) {
-    btn.innerHTML = isMuted ? "🔇 Ton an" : "🔊 Ton aus";
-    btn.style.opacity = isMuted ? "0.6" : "1";
-    btn.title = isMuted ? "Sound einschalten" : "Sound stummschalten";
-    console.log("UI updated - button text:", btn.innerHTML);
+  const desktopBtn = document.getElementById("muteButton");
+  const mobileBtn = document.getElementById("muteButtonMobile");
+
+  if (desktopBtn) {
+    desktopBtn.innerHTML = isMuted ? "🔇 Ton an" : "🔊 Ton aus";
+    desktopBtn.style.opacity = isMuted ? "0.6" : "1";
+    desktopBtn.title = isMuted ? "Sound einschalten" : "Sound stummschalten";
   }
 
-  const muteIcon = document.getElementById("muteIcon");
-  if (muteIcon) {
-    muteIcon.textContent = isMuted ? "🔇" : "🔊";
+  if (mobileBtn) {
+    mobileBtn.textContent = isMuted ? "🔇" : "🔊";
+    mobileBtn.style.opacity = isMuted ? "0.6" : "1";
+    mobileBtn.title = isMuted ? "Sound einschalten" : "Sound stummschalten";
   }
 }
 
@@ -162,7 +175,7 @@ function showStartScreen() {
 
 /**
  * Zeichnet das Startbild auf das übergebene Canvas-Rendering-Kontext-Objekt.
- * 
+ *
  * @param {CanvasRenderingContext2D} ctx - Kontext des Canvas zum Zeichnen.
  */
 function drawStartImage(ctx) {
@@ -211,7 +224,7 @@ function initKeyboardListeners() {
  * Event-Handler für Tastendruck (keydown).
  * Setzt die entsprechenden Tasten-Flags in der Keyboard-Instanz.
  * Unterstützt Pfeiltasten, Leertaste, Taste D und Fullscreen-Toggle (Taste F).
- * 
+ *
  * @param {KeyboardEvent} e - Das KeyboardEvent-Objekt.
  */
 function handleKeyDown(e) {
@@ -243,7 +256,7 @@ function handleKeyDown(e) {
 /**
  * Event-Handler für Tastelöschung (keyup).
  * Setzt die entsprechenden Tasten-Flags in der Keyboard-Instanz zurück.
- * 
+ *
  * @param {KeyboardEvent} e - Das KeyboardEvent-Objekt.
  */
 function handleKeyUp(e) {
@@ -271,7 +284,7 @@ function handleKeyUp(e) {
 
 /**
  * Aktiviert oder deaktiviert den Vollbildmodus für das angegebene Element.
- * 
+ *
  * @param {HTMLElement} element - Das HTML-Element, das im Vollbildmodus angezeigt werden soll.
  */
 function toggleFullscreen(element) {
@@ -297,7 +310,7 @@ function initTouchControls() {
 
 /**
  * Sammelt die Steuerungs-Buttons für Touch-Eingaben.
- * 
+ *
  * @returns {Object|null} Objekt mit den Buttons oder null, falls nicht alle gefunden wurden.
  */
 function getTouchButtons() {
@@ -317,7 +330,7 @@ function getTouchButtons() {
 /**
  * Fügt Touch-Eventlistener an die Steuerungs-Buttons hinzu,
  * um die Keyboard-Flags bei Touchstart und Touchend zu setzen bzw. zurückzusetzen.
- * 
+ *
  * @param {Object.<string, HTMLElement>} buttons - Objekt mit Tastenbezeichnungen als Schlüssel und Button-Elementen als Werte.
  */
 function addTouchEventListeners(buttons) {

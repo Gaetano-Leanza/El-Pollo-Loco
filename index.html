@@ -70,7 +70,7 @@
         alt="controls"
         style="display: none"
       />
-      <!-- Besser: ohne direktes onclick -->
+      <!-- Desktop-Mute-Button -->
       <button id="muteButton" title="Sound stummschalten" tabindex="-1">
         <span id="muteIcon">🔊</span> Ton aus
       </button>
@@ -86,10 +86,22 @@
         <div id="rightBtn" class="touch-btn">→</div>
       </div>
 
-      <!-- Springen und Werfen -->
-      <div class="right-buttons">
-        <div id="jumpBtn" class="touch-btn">↑</div>
-        <div id="throwBtn" class="touch-btn">✸</div>
+      <!-- Neue Wrapper-Gruppe: Mute oben, dann andere Buttons -->
+      <div class="right-buttons-wrapper">
+        <!-- Mute-Button speziell für Mobilgeräte nur als Icon -->
+        <button
+          id="muteButtonMobile"
+          class="touch-btn"
+          title="Sound umschalten"
+          tabindex="0"
+        >
+          🔇
+        </button>
+
+        <div class="right-buttons">
+          <div id="jumpBtn" class="touch-btn">↑</div>
+          <div id="throwBtn" class="touch-btn">✸</div>
+        </div>
       </div>
     </div>
 

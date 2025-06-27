@@ -136,8 +136,9 @@ canvas {
   transition: all 0.2s ease-in-out;
   text-transform: uppercase;
   letter-spacing: 1px;
-  outline: none; 
-  user-select: none; 
+  outline: none;
+  user-select: none;
+  display: inline-block;
 }
 
 #muteButton:hover {
@@ -188,7 +189,6 @@ canvas {
   transition: opacity 0.3s ease, transform 0.3s ease;
 }
 
-/* Nur auf Geräten mit Touch UND im Hochformat anzeigen */
 @media (pointer: coarse) and (orientation: portrait) {
   #rotate-warning {
     display: flex;
@@ -201,7 +201,6 @@ canvas {
   }
 }
 
-/* Ergänzung: Touch-Only Darstellung für mobile-controls */
 @media (pointer: coarse) {
   .mobile-controls {
     display: flex !important;
@@ -251,6 +250,11 @@ canvas {
     cursor: pointer;
     user-select: none;
   }
+
+  /* Desktop Button auf Touch-Geräten verstecken */
+  #muteButton {
+    display: none !important;
+  }
 }
 
 @media (pointer: coarse) {
@@ -261,10 +265,55 @@ canvas {
     transform: translateX(-50%);
     z-index: 101;
   }
+
+  .right-buttons-wrapper {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-end;
+    gap: 10px;
+  }
+
+  #muteButtonMobile.touch-btn {
+    background-color: rgba(255, 255, 255, 0.8);
+    border: 2px solid #333;
+    border-radius: 50%;
+    width: 50px;
+    height: 50px;
+    font-size: 20px;
+    padding: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    user-select: none;
+    z-index: 101;
+  }
+
+  #muteButtonMobile.touch-btn:hover {
+    background-color: rgba(255, 204, 0, 0.9);
+    transform: scale(1.05);
+  }
 }
 
 @media (pointer: fine) {
   .mobile-controls {
     display: none !important;
+  }
+  
+  /* Mobile Button auf Desktop verstecken */
+  #muteButtonMobile {
+    display: none !important;
+  }
+}
+
+/* Mobile Button - standardmäßig versteckt */
+#muteButtonMobile {
+  display: none;
+}
+
+/* Mobile Button nur auf Touch-Geräten anzeigen */
+@media (pointer: coarse) {
+  #muteButtonMobile {
+    display: inline-flex !important;
   }
 }

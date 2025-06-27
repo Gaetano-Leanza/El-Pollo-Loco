@@ -3,20 +3,20 @@ body {
   height: 100%;
   margin: 0;
   padding: 0;
-  overflow: hidden;
 }
 
 body {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
   background-color: blanchedalmond;
   font-size: 20px;
-  padding-left: 40p;
+  margin: 0;
+  padding: 0;
+  overflow-y: auto;
 }
 
 .header-container {
   margin-top: 30px;
+  margin-bottom: 20px;
+  text-align: center;
 }
 
 .startseite-link {
@@ -42,19 +42,29 @@ body {
   transform: translateY(3px);
 }
 
-.pepe {
-  position: absolute;
-  margin-top: 100px;
-  height: 500px;
-  width: 750px;
+.impressum-text {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 20px;
+  box-sizing: border-box;
+  text-align: center;
+}
+
+.impressum-text h4,
+.impressum-text h5 {
+  margin: 10px 0;
+}
+
+.impressum-text p {
+  margin: 5px 0;
+}
+
+.impressum-text a {
+  margin: 0;
 }
 
 @media (pointer: coarse) {
   .mobile-controls {
     display: flex !important;
-  }
-
-  .pepe {
-    display: none;
   }
 }
