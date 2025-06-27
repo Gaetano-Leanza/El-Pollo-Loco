@@ -11,6 +11,7 @@ const soundCache = {}; // Sound-Dateien werden hier zwischengespeichert
  */
 document.addEventListener("DOMContentLoaded", () => {
   loadMuteState();
+  initMuteSystem(); // Hier einmalig initialisieren
 });
 
 /**
@@ -21,7 +22,7 @@ function init() {
   world = new World(canvas, keyboard);
   initTouchControls();
   initKeyboardListeners();
-  initMuteSystem();
+  // initMuteSystem(); // ENTFERNT - wird bereits bei DOMContentLoaded gemacht
 }
 
 /**
@@ -46,13 +47,28 @@ function playSound(soundFile) {
 }
 
 /**
- * Initialisiert das Mute-System
+ * Initialisiert das Mute-System - NUR EINMAL
  */
 function initMuteSystem() {
-  if (muteInitialized) return;
+  if (muteInitialized) {
+    console.log("Mute system already initialized");
+    return;
+  }
   muteInitialized = true;
+  console.log("Initializing mute system...");
 
-  loadMuteState();
+  // Event-Listener für Mute-Button hinzufügen
+  const muteButton = document.getElementById('muteButton');
+  if (muteButton) {
+    // Alle bestehenden Event-Listener entfernen (falls vorhanden)
+    muteButton.removeEventListener('click', toggleMute);
+    // Neuen Event-Listener hinzufügen
+    muteButton.addEventListener('click', toggleMute);
+    console.log("Mute button event listener added");
+  } else {
+    console.warn("Mute button not found");
+  }
+
   updateMuteUI();
 }
 
@@ -74,6 +90,7 @@ function loadMuteState() {
  * Schaltet den Mute-Status um und speichert ihn
  */
 function toggleMute() {
+  console.log("toggleMute called - current state:", isMuted);
   isMuted = !isMuted;
   console.log("Mute toggled to:", isMuted);
 
@@ -95,6 +112,7 @@ function updateMuteUI() {
     btn.innerHTML = isMuted ? '🔇 Ton an' : '🔊 Ton aus';
     btn.style.opacity = isMuted ? '0.6' : '1';
     btn.title = isMuted ? "Sound einschalten" : "Sound stummschalten";
+    console.log("UI updated - button text:", btn.innerHTML);
   }
 
   const muteIcon = document.getElementById("muteIcon");
@@ -103,17 +121,8 @@ function updateMuteUI() {
   }
 }
 
-// Event Listener für Mute Button
-window.addEventListener('load', () => {
-  const muteButton = document.getElementById('muteButton');
-  if (muteButton) {
-    muteButton.addEventListener('click', toggleMute);
-  }
-
-  updateMuteUI();
-  console.log("Initial mute state:", isMuted);
-});
-
+// ENTFERNT: Das window load Event, da es zu doppelten Event-Listenern führt
+// window.addEventListener('load', () => { ... });
 
 // Startscreen & Game-Logik
 function showStartScreen() {
@@ -164,7 +173,10 @@ function handleKeyDown(e) {
     case 32: keyboard.SPACE = true; break;
     case 68: keyboard.D = true; break;
     case 70: toggleFullscreen(canvas); break;
-    case 77: toggleMute(); break; // M-Taste für Mute
+    case 77: 
+      console.log("M key pressed - calling toggleMute");
+      toggleMute(); 
+      break; // M-Taste für Mute
   }
 }
 
