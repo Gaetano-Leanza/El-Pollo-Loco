@@ -1,47 +1,173 @@
 /**
  * Simplified Character class - delegates complex logic to handler classes
+ * Represents the main player character in the game with movement, health, and animation capabilities
  * @extends MovableObject
  */
 class Character extends MovableObject {
-  // Constants
+  /**
+   * Time threshold for short idle state in milliseconds
+   * @type {number}
+   * @static
+   */
   static IDLE_TIME_SHORT = 500;
+
+  /**
+   * Time threshold for long idle state in milliseconds
+   * @type {number}
+   * @static
+   */
   static IDLE_TIME_LONG = 3000;
+
+  /**
+   * Animation frame update interval in milliseconds
+   * @type {number}
+   * @static
+   */
   static ANIMATION_INTERVAL = 100;
+
+  /**
+   * Duration for each frame of death animation in milliseconds
+   * @type {number}
+   * @static
+   */
   static DEATH_ANIMATION_FRAME_DURATION = 150;
 
-  // Basic properties
+  /**
+   * Character height in pixels
+   * @type {number}
+   */
   height = 280;
+
+  /**
+   * Initial Y position of character
+   * @type {number}
+   */
   y = 80;
+
+  /**
+   * Movement speed in pixels per frame
+   * @type {number}
+   */
   speed = 10;
+
+  /**
+   * Horizontal offset for collision hitbox
+   * @type {number}
+   */
   hitboxOffsetX = 25;
+
+  /**
+   * Vertical offset for collision hitbox
+   * @type {number}
+   */
   hitboxOffsetY = 130;
+
+  /**
+   * Width reduction for collision hitbox
+   * @type {number}
+   */
   hitboxWidthReduction = 50;
+
+  /**
+   * Height reduction for collision hitbox
+   * @type {number}
+   */
   hitboxHeightReduction = 160;
   
-  // Game state
+  /**
+   * Number of coins collected by the character
+   * @type {number}
+   */
   collectedCoins = 0;
+
+  /**
+   * Maximum number of coins that can be collected
+   * @type {number}
+   */
   maxCoins = 20;
+
+  /**
+   * Number of bottles collected by the character
+   * @type {number}
+   */
   collectedBottles = 0;
+
+  /**
+   * Maximum number of bottles that can be collected
+   * @type {number}
+   */
   maxBottles = 20;
+
+  /**
+   * Timestamp of the last movement action
+   * @type {number}
+   */
   lastMoveTime = Date.now();
   
-  // Health properties - WICHTIG: Diese müssen initialisiert werden!
+  /**
+   * Current health/energy level of the character (0-100)
+   * @type {number}
+   */
   energy = 100;
+
+  /**
+   * Timestamp of the last hit received
+   * @type {number}
+   */
   lastHit = 0;
-  timeToRecover = 1500; // 1.5 Sekunden Invincibility frames (längere Pause zwischen Schäden)
+
+  /**
+   * Recovery time after taking damage (invincibility frames) in milliseconds
+   * @type {number}
+   */
+  timeToRecover = 1500;
   
-  // Flags
+  /**
+   * Flag indicating if character is currently throwing a bottle
+   * @type {boolean}
+   */
   isThrowingBottle = false;
+
+  /**
+   * Flag indicating if character is in dying state
+   * @type {boolean}
+   */
   isDying = false;
+
+  /**
+   * Flag indicating if death animation has started
+   * @type {boolean}
+   */
   deathAnimationStarted = false;
+
+  /**
+   * Flag indicating if hurt sound has been played
+   * @type {boolean}
+   */
   hurtSoundPlayed = false;
 
-  // References
+  /**
+   * Reference to the game world instance
+   * @type {World|null}
+   */
   world;
+
+  /**
+   * Reference to the canvas 2D rendering context
+   * @type {CanvasRenderingContext2D|null}
+   */
   ctx;
+
+  /**
+   * Reference to the HTML canvas element
+   * @type {HTMLCanvasElement|null}
+   */
   canvas;
 
-  // Image arrays (gekürzt für Übersichtlichkeit)
+  /**
+   * Array of walking animation image paths
+   * @type {string[]}
+   */
   IMAGES_WALKING = [
     "../img/2_character_pepe/2_walk/W-21.png",
     "../img/2_character_pepe/2_walk/W-22.png",
@@ -51,6 +177,10 @@ class Character extends MovableObject {
     "../img/2_character_pepe/2_walk/W-26.png"
   ];
 
+  /**
+   * Array of jumping animation image paths
+   * @type {string[]}
+   */
   IMAGES_JUMPING = [
     "../img/2_character_pepe/3_jump/J-31.png",
     "../img/2_character_pepe/3_jump/J-32.png",
@@ -63,6 +193,10 @@ class Character extends MovableObject {
     "../img/2_character_pepe/3_jump/J-39.png"
   ];
 
+  /**
+   * Array of death animation image paths
+   * @type {string[]}
+   */
   IMAGES_DEAD = [
     "../img/2_character_pepe/5_dead/D-51.png",
     "../img/2_character_pepe/5_dead/D-52.png",
@@ -73,12 +207,20 @@ class Character extends MovableObject {
     "../img/2_character_pepe/5_dead/D-57.png"
   ];
 
+  /**
+   * Array of hurt animation image paths
+   * @type {string[]}
+   */
   IMAGES_HURT = [
     "../img/2_character_pepe/4_hurt/H-41.png",
     "../img/2_character_pepe/4_hurt/H-42.png",
     "../img/2_character_pepe/4_hurt/H-43.png"
   ];
 
+  /**
+   * Array of idle animation image paths
+   * @type {string[]}
+   */
   IMAGES_IDLE = [
     "../img/2_character_pepe/1_idle/idle/I-1.png",
     "../img/2_character_pepe/1_idle/idle/I-2.png",
@@ -92,6 +234,10 @@ class Character extends MovableObject {
     "../img/2_character_pepe/1_idle/idle/I-10.png"
   ];
 
+  /**
+   * Array of long idle animation image paths
+   * @type {string[]}
+   */
   IMAGES_LONG_IDLE = [
     "../img/2_character_pepe/1_idle/long_idle/I-11.png",
     "../img/2_character_pepe/1_idle/long_idle/I-12.png",
@@ -107,18 +253,40 @@ class Character extends MovableObject {
 
   /**
    * Creates a new Character instance
+   * Initializes all handler classes and sets up basic game state
+   * @constructor
    */
   constructor() {
     super();
     
-    console.log("Character constructor called - Energy:", this.energy); // Debug
-    
+    /**
+     * Handler for game over logic
+     * @type {GameOver}
+     */
     this.gameOverHandler = new GameOver();
     
-    // Initialize handler classes
+    /**
+     * Handler for character animations
+     * @type {CharacterAnimations}
+     */
     this.animations = new CharacterAnimations(this);
+
+    /**
+     * Handler for character movement
+     * @type {CharacterMovement}
+     */
     this.movement = new CharacterMovement(this);
+
+    /**
+     * Handler for character actions (throwing, collecting)
+     * @type {CharacterActions}
+     */
     this.actions = new CharacterActions(this);
+
+    /**
+     * Handler for character health and damage
+     * @type {CharacterHealth}
+     */
     this.health = new CharacterHealth(this);
     
     this.initializeImages();
@@ -128,6 +296,8 @@ class Character extends MovableObject {
 
   /**
    * Initializes all character images and loads them into cache
+   * Preloads walking, jumping, death, hurt, idle, and long idle animations
+   * @returns {void}
    */
   initializeImages() {
     this.loadImage("../img/2_character_pepe/2_walk/W-21.png");
@@ -139,8 +309,9 @@ class Character extends MovableObject {
   }
 
   /**
-   * Sets the canvas rendering context
+   * Sets the canvas rendering context for character and game over screen
    * @param {CanvasRenderingContext2D} ctx - The 2D rendering context
+   * @returns {void}
    */
   setCanvasContext(ctx) {
     this.ctx = ctx;
@@ -151,6 +322,7 @@ class Character extends MovableObject {
 
   /**
    * Calculates and returns the character's collision hitbox
+   * Applies offsets and size reductions for more precise collision detection
    * @returns {Object} Hitbox object with x, y, width, height properties
    */
   getHitbox() {
@@ -164,6 +336,8 @@ class Character extends MovableObject {
 
   /**
    * Resets the idle timer to current time
+   * Used to track character activity for idle animations
+   * @returns {void}
    */
   resetIdleTimer() {
     this.lastMoveTime = Date.now();
@@ -171,6 +345,8 @@ class Character extends MovableObject {
 
   /**
    * Main animation loop that runs at 60 FPS
+   * Handles death animation, movement, jumping, and camera updates
+   * @returns {void}
    */
   animate() {
     setInterval(() => {
@@ -191,7 +367,8 @@ class Character extends MovableObject {
 
   /**
    * Finds the canvas context as fallback if not directly set
-   * @returns {CanvasRenderingContext2D|null} The canvas context or null
+   * Searches through multiple possible sources for the canvas context
+   * @returns {CanvasRenderingContext2D|null} The canvas context or null if not found
    */
   findCanvasContext() {
     if (this.ctx) return this.ctx;
@@ -201,53 +378,92 @@ class Character extends MovableObject {
     return canvas?.getContext("2d") || null;
   }
 
-  // WICHTIG: Alle möglichen Varianten der hit() Methode für Debugging
-  
   /**
    * Main hit method - delegates to health handler
-   * This should be called by collision detection
+   * This should be called by collision detection system
+   * @returns {void}
    */
   hit() {
-    console.log("Character.hit() called!"); // Debug
     this.health.hit();
   }
 
   /**
-   * Alternative hit method name (falls dein System das verwendet)
+   * Alternative hit method for damage dealing
+   * Applies a specific amount of damage to the character
+   * @param {number} [damage=20] - Amount of damage to apply
+   * @returns {void}
    */
   takeDamage(damage = 20) {
-    console.log("Character.takeDamage() called with damage:", damage); // Debug
     this.health.forceDamage(damage);
   }
 
   /**
-   * Another possible hit method name
+   * Another hit method variant for collision systems
+   * @returns {void}
    */
   getHit() {
-    console.log("Character.getHit() called!"); // Debug
     this.health.hit();
   }
 
   /**
-   * Manual damage for testing
+   * Manual damage method for testing purposes
+   * Directly reduces energy and updates status bar
+   * @returns {void}
    */
   testDamage() {
-    console.log("TEST: Applying damage manually");
     this.energy -= 20;
-    console.log("Energy after test damage:", this.energy);
     if (this.world && this.world.statusBar) {
       this.world.statusBar.setPercentage(this.energy);
     }
   }
 
-  // Delegate methods to handlers
-  throwBottle() { this.actions.throwBottle(); }
-  collectCoin() { this.actions.collectCoin(); }
-  collectBottle() { this.actions.collectBottle(); }
-  setHealth(health) { this.health.setHealth(health); }
-  heal(amount) { this.health.heal(amount); }
+  /**
+   * Delegates bottle throwing to actions handler
+   * @returns {void}
+   */
+  throwBottle() { 
+    this.actions.throwBottle(); 
+  }
 
-  // Cleanup method
+  /**
+   * Delegates coin collection to actions handler
+   * @returns {void}
+   */
+  collectCoin() { 
+    this.actions.collectCoin(); 
+  }
+
+  /**
+   * Delegates bottle collection to actions handler
+   * @returns {void}
+   */
+  collectBottle() { 
+    this.actions.collectBottle(); 
+  }
+
+  /**
+   * Delegates health setting to health handler
+   * @param {number} health - New health value to set
+   * @returns {void}
+   */
+  setHealth(health) { 
+    this.health.setHealth(health); 
+  }
+
+  /**
+   * Delegates healing to health handler
+   * @param {number} amount - Amount of health to restore
+   * @returns {void}
+   */
+  heal(amount) { 
+    this.health.heal(amount); 
+  }
+
+  /**
+   * Cleanup method to stop all running animations and intervals
+   * Should be called when character is removed from game
+   * @returns {void}
+   */
   destroy() {
     this.animations.stopAnimationWatcher();
   }
