@@ -1,36 +1,128 @@
+@font-face {
+  font-family: "zabars";
+  src: url("fonts/Zabars.ttf") format("truetype");
+}
+
 html,
 body {
+  width: 100%;
   height: 100%;
-  margin: 0;
   padding: 0;
+  margin: 0;
   overflow: hidden;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+button {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  font-family: "zabars", Arial, Helvetica, sans-serif;
+  border: none;
+  font-size: 30px;
+  background-color: transparent;
+}
+
+.start-container {
+  gap: 80px;
+  top: 60px;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  z-index: 100;
+}
+
+#mobileBtn-container {
+  width: 100%;
+  max-width: 720px;
+  display: none;
+  bottom: 0px;
+}
+
+#mobileBtn-container button {
+  width: 60px;
+  height: 60px;
+}
+
+.btn-container {
+  right: 10px;
+  top: 10px;
+}
+
+.btn-container button {
+  width: 50px;
+  height: 50px;
 }
 
 body {
+  font-family: "zabars", Arial, Helvetica, sans-serif;
   display: flex;
   flex-direction: column;
   align-items: center;
-  justify-content: center;
-  background-image: url("../img/5_background/desert.jpg");
+  background-image: url("img/10_BG/desert.jpg");
   background-position: center;
-  background-size: cover;
   background-repeat: no-repeat;
-  position: relative;
+  background-size: cover;
 }
 
-canvas {
-  background-color: rgb(245, 149, 5);
-  display: block;
+h1 {
+  font-size: 64px;
+  letter-spacing: 3px;
+}
+
+h2 {
+  font-size: 40px;
+}
+
+p {
+  font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
+  font-weight: bold;
+  padding: 20px;
+}
+
+#orientationMessage {
+  width: 100%;
+  height: 100vh;
+  display: flex;
+  background: rgba(0, 0, 0, 0.7);
+  color: white;
+  justify-content: center;
+  align-items: center;
+  font-size: 2rem;
+  z-index: 1000;
+  padding: 40px;
+}
+
+.start {
+  width: 100%;
+  border-radius: 10px;
+  box-sizing: border-box;
+  overflow: hidden;
+}
+
+.start img,
+.endscreen img {
   width: 100%;
   max-width: 720px;
   height: auto;
-  aspect-ratio: 3 / 2;
+  display: block;
 }
 
-.title {
-  height: 50px;
-  width: 400px;
-  margin-bottom: 20px;
+.endscreen-btns {
+  gap: 80px;
+  bottom: 40px;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  z-index: 100;
+}
+
+.endscreen {
+  top: 0;
+  right: 0;
+
+  z-index: 500;
 }
 
 .controls {
@@ -39,14 +131,176 @@ canvas {
   margin-top: 20px;
 }
 
-.game-container {
+.menu-btn {
+  padding: 10px 20px;
+  background-color: #ffcc1b;
+  border-radius: 20px;
+  width: 200px;
+}
+
+.menu-btn:hover {
+  background-color: #ffab0e;
+}
+
+.end {
+  background-image: url("img/10_BG/startscreen_1.jpg");
+  background-size: cover;
+}
+
+#fullscreen {
+  display: none;
+}
+
+canvas {
+  background-color: #000;
+  display: block;
+  border-radius: 10px;
+}
+
+.canvas-container {
   display: flex;
-  flex-direction: column;
-  align-items: center;
   justify-content: center;
+  gap: 20px;
   width: 100%;
-  max-width: 720px;
-  margin: 0 auto;
+}
+
+.key-img {
+  width: 100%;
+  max-width: 50px;
+  min-width: 20px;
+  height: auto;
+}
+
+.img-throw {
+  max-width: 70px;
+}
+
+.img-up {
+  max-width: 150px;
+}
+
+/* -----------------Loading-Spinner---------------*/
+
+.spinner {
+  display: none;
+  /*  transform: translate(-50%, -50%); */
+  justify-content: center;
+}
+
+/* Animation  Spinner-img */
+.spinner-img {
+  width: 100px;
+  height: 100px;
+  animation: spin 2s linear infinite; /* continuous rotation */
+}
+
+@keyframes spin {
+  from {
+    transform: rotate(0deg);
+  }
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+/*----------------Dialog------------------------*/
+
+dialog::backdrop {
+  background-color: #191b1d00;
+  transition: background-color 0.5s ease-in-out;
+}
+
+dialog {
+  width: 100%;
+  max-width: 650px;
+  margin: auto;
+  height: 440px;
+  border: none;
+  border-radius: 20px;
+  margin-left: auto;
+  margin-right: auto;
+  padding: 0;
+  position: fixed;
+  background-color: transparent;
+  overflow: auto;
+  transition: all 250ms ease-in-out;
+  -webkit-transition: all 250ms ease-in-out;
+  -moz-transition: all 250ms ease-in-out;
+}
+
+dialog.bg::backdrop {
+  background-color: #191b1d6e;
+}
+
+.dialog-container {
+  width: 100%;
+  height: 100%;
+  background-color: #eec386;
+  overflow: auto;
+}
+
+.close-btn {
+  top: 20px;
+  right: 20px;
+  width: 40px;
+  height: 40px;
+  border-radius: 25px;
+  z-index: 6000;
+  font-size: 25px;
+}
+.close-btn:hover {
+  background-color: #ff7f17;
+}
+
+table {
+  font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
+  padding: 10px 0;
+}
+
+.custom-table {
+  width: 100%;
+  border-collapse: collapse;
+}
+.custom-table td {
+  vertical-align: middle;
+}
+.icons-column {
+  white-space: nowrap;
+  width: 1%;
+  text-align: right;
+  padding-right: 20px;
+}
+.icons-column img {
+  width: 40px;
+  height: 40px;
+  margin-right: 5px;
+  vertical-align: middle;
+  filter: drop-shadow(3px 3px rgb(0, 0, 0));
+}
+.text-column {
+  width: auto;
+}
+td {
+  height: 70px;
+}
+
+/*----------------Scrollbar--------------------*/
+
+dialog::-webkit-scrollbar,
+.dialog-container::-webkit-scrollbar {
+  width: 12px; /* width of the entire scrollbar */
+}
+
+dialog::-webkit-scrollbar-track,
+.dialog-container::-webkit-scrollbar {
+  background: rgb(255, 255, 255); /* color of the tracking area */
+}
+
+dialog::-webkit-scrollbar-thumb,
+.dialog-container::-webkit-scrollbar {
+  background-color: #ce5b35; /* color of the scroll thumb */
+  border-radius: 25px; /* roundness of the scroll thumb */
+  border: 3px solid rgb(255, 255, 255); /* creates padding around scroll thumb */
 }
 
 .button-container {
@@ -75,7 +329,7 @@ canvas {
   padding: 20px;
 }
 
-#startButton {
+.menu-btn {
   background-color: #ffcc00;
   color: #4b1e00;
   font-family: "Press Start 2P", cursive;
@@ -91,8 +345,7 @@ canvas {
   text-transform: uppercase;
   letter-spacing: 1px;
 }
-
-#startButton:hover {
+.menu-btn:hover {
   background-color: #ffe066;
   box-shadow: 0 4px 0 #b97a00;
   transform: translateY(4px);
@@ -116,32 +369,6 @@ canvas {
 }
 
 #gamerulesButton:hover {
-  background-color: #ffe066;
-  box-shadow: 0 4px 0 #b97a00;
-  transform: translateY(4px);
-}
-
-#muteButton {
-  background-color: #ffcc00;
-  color: #4b1e00;
-  font-family: "Press Start 2P", cursive;
-  font-size: 18px;
-  font-weight: 900;
-  padding: 15px 30px;
-  margin-top: 20px;
-  border: 3px solid #4b1e00;
-  border-radius: 12px;
-  cursor: pointer;
-  box-shadow: 0 8px 0 #b97a00;
-  transition: all 0.2s ease-in-out;
-  text-transform: uppercase;
-  letter-spacing: 1px;
-  outline: none;
-  user-select: none;
-  display: inline-block;
-}
-
-#muteButton:hover {
   background-color: #ffe066;
   box-shadow: 0 4px 0 #b97a00;
   transform: translateY(4px);
@@ -171,145 +398,70 @@ canvas {
   color: black;
 }
 
-@keyframes coin-blink {
-  0% {
-    opacity: 1;
-  }
-  50% {
-    opacity: 0.3;
-    transform: scale(0.9);
-  }
-  100% {
-    opacity: 1;
+/* CSS */
+#toggleSounds {
+  font-size: 24px; /* Größe des Symbols */
+  background: transparent;
+  border: none;
+  cursor: pointer;
+  outline: none; /* Entfernt schwarzen Fokusrahmen */
+}
+
+#toggleSounds:focus {
+  outline: none; /* Fokusrahmen auch beim Keyboard */
+}
+
+.title {
+  height: 40px;
+  width: auto;
+  margin-bottom: 30px;
+}
+
+/*----------------Responsive--------------------*/
+
+@media only screen and (max-width: 875px) {
+  .controls {
+    display: none;
   }
 }
 
-.coin {
-  animation: coin-blink 1.5s infinite;
-  transition: opacity 0.3s ease, transform 0.3s ease;
-}
-
-@media (pointer: coarse) and (orientation: portrait) {
-  #rotate-warning {
-    display: flex;
-  }
-
-  canvas,
-  .mobile-controls,
-  .game-container {
-    display: none !important;
-  }
-}
-
-@media (pointer: coarse) {
-  .mobile-controls {
-    display: flex !important;
-  }
-
+@media only screen and (max-width: 720px) {
   canvas {
-    width: 100vw !important;
-    height: auto !important;
-    max-height: 100dvh !important;
-    aspect-ratio: 16/9;
-    position: fixed;
-    top: 50%;
-    left: 50%;
-    transform: translate(-50%, -50%);
-    object-fit: contain;
+    width: 100%;
   }
+}
 
-  .mobile-controls {
-    position: fixed;
-    bottom: 20px;
-    left: 0;
-    right: 0;
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    padding: 0 20px;
-    z-index: 100;
+@media only screen and (max-height: 480px) {
+  canvas {
+    height: 100dvh;
   }
-
-  .left-right-container,
-  .right-buttons {
-    display: flex;
-    gap: 10px;
+  #impressum {
+    display: none;
   }
+}
 
-  .touch-btn {
-    background-color: rgba(255, 255, 255, 0.8);
-    border: 2px solid #333;
-    border-radius: 50%;
-    width: 50px;
-    height: 50px;
-    font-size: 20px;
-    padding: 0;
-    display: flex;
-    align-items: center;
+@media only screen and (max-height: 480px) {
+  h1 {
+    display: none;
+  }
+  body {
     justify-content: center;
-    cursor: pointer;
-    user-select: none;
   }
-
-  #muteButton {
-    display: none !important;
+  #impressum {
+    display: none;
   }
 }
 
-@media (pointer: coarse) {
-  #startButton {
-    position: fixed;
-    bottom: 30px;
-    left: 50%;
-    transform: translateX(-50%);
-    z-index: 101;
+@media only screen and (max-width: 1024px) {
+  .keyboard-container {
+    display: none;
   }
-
-  .right-buttons-wrapper {
-    display: flex;
-    flex-direction: column;
-    align-items: flex-end;
-    gap: 10px;
-  }
-
-  #muteButtonMobile.touch-btn {
-    background-color: rgba(255, 255, 255, 0.8);
-    border: 2px solid #333;
-    border-radius: 50%;
-    width: 50px;
-    height: 50px;
-    font-size: 20px;
-    padding: 0;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    cursor: pointer;
-    user-select: none;
-    z-index: 101;
-  }
-
-  #muteButtonMobile.touch-btn:hover {
-    background-color: rgba(255, 204, 0, 0.9);
-    transform: scale(1.05);
+  #impressum {
+    display: none;
   }
 }
-
-@media (pointer: fine) {
-  .mobile-controls {
-    display: none !important;
-  }
-  
-  #muteButtonMobile {
-    display: none !important;
-  }
-}
-
-#muteButtonMobile {
-  display: none;
-}
-
-@media (pointer: coarse) {
-  #muteButtonMobile {
-    display: inline-flex !important;
+@media only screen and (max-height: 700px) {
+  #impressum {
+    display: none;
   }
 }
