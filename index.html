@@ -1,122 +1,164 @@
 <!DOCTYPE html>
-<html lang="de">
+<html lang="en" translate="no">
   <head>
-    <!-- Zeichencodierung -->
     <meta charset="UTF-8" />
-
-    <!-- Responsives Layout für mobile Geräte -->
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <link rel="stylesheet" href="./style.css" />
+    <link rel="stylesheet" href="./assets.css" />
+    <link
+      rel="icon"
+      type="image/png"
+      href="img/3_enemies_chicken/chicken_normal/1_walk/1_w.png"
+    />
+    <title>El pollo loco</title>
+    <script src="./models/keyboard.class.js" defer></script>
+    <script src="./js/keyboard.js" defer></script>
+    <script src="./js/game.js" defer></script>
+    <script src="./models/drawable-object.class.js" defer></script>
+    <script src="./models/movable-object.class.js" defer></script>
+    <script src="./models/collectible-item.js" defer></script>
+    <script src="./models/background-object.class.js" defer></script>
+    <script src="./models/cloud.class.js" defer></script>
+    <script src="./models/sound-manager.class.js" defer></script>
+    <script src="./models/statusbar.class.js" defer></script>
+    <script src="./models/character.class.js" defer></script>
+    <script src="./models/thoughtBubble.class.js" defer></script>
 
-    <!-- Titel des Spiels -->
-    <title>El Pollo Loco</title>
-
-    <!-- Favicon -->
-    <link rel="icon" href="img/favicon.png" type="image/png" />
-
-    <!-- Verlinkung zur CSS-Datei für das Styling -->
-    <link rel="stylesheet" href="style.css" />
-
-    <!-- Einbindung aller JavaScript-Klassen (Modelle) für das Spiel -->
-    <script src="models/drawable-object.class.js"></script>
-    <script src="models/movable-object.class.js"></script>
-    <script src="models/game-over.class.js"></script>
-    <script src="models/throwable-object.class.js"></script>
-    <script src="models/character.class.js"></script>
-    <script src="models/character-animations.class.js"></script>
-    <script src="models/character-movement.class.js"></script>
-    <script src="models/character-actions.class.js"></script>
-    <script src="models/character-health.class.js"></script>
-    <script src="models/base-chicken.class.js"></script>
-    <script src="models/chicken.class.js"></script>
-    <script src="models/chicken-small.class.js"></script>
-    <script src="models/cloud.class.js"></script>
-    <script src="models/status-bar.class.js"></script>
-    <script src="models/background-object.class.js"></script>
-    <script src="models/keyboard.class.js"></script>
-    <script src="models/level.class.js"></script>
-    <script src="models/endboss.class.js"></script>
-    <script src="models/coin.class.js"></script>
-    <script src="models/bottle.class.js"></script>
-
-    <!-- Level-Konfiguration -->
-    <script src="levels/level1.js"></script>
-
-    <!-- Spiellogik (Steuerung, Initialisierung etc.) -->
-    <script src="models/world.class.js"></script>
-    <script src="js/game.js" defer></script>
+    <script src="./models/coin.class.js" defer></script>
+    <script src="./models/bottle.class.js" defer></script>
+    <script src="./js/levels/level1.js" defer></script>
+    <script src="./models/world.class.js" defer></script>
+    <script src="./models/level.class.js" defer></script>
+    <script src="./models/endscreen.class.js" defer></script>
+    <script src="./models/throwable-object.class.js" defer></script>
+    <script src="./models/chicken.class.js" defer></script>
+    <script src="./models/chicken-small.class.js" defer></script>
+    <script src="./models/endboss.class.js" defer></script>
   </head>
-
-  <body onload="showStartScreen()">
-    <!-- Container für das Spiel -->
-    <div class="game-container">
-      <!-- Spieltitel -->
-      <img class="title" src="../img/title.PNG" alt="El Pollo Loco" />
-
-      <!-- Spielfläche -->
-      <canvas id="canvas" width="720" height="480"></canvas>
-
-      <!-- Startbutton -->
-      <div class="button-container">
-        <button id="startButton" onclick="startGame()">Starte Spiel</button>
-        <button
-          id="gamerulesButton"
-          onclick="window.location.href='gameRules.html'"
-        >
-          Spielregeln
-        </button>
-      </div>
-
-      <!-- Steuerungsanzeige (wird erst später eingeblendet) -->
-      <img
-        id="controlsImage"
-        class="controls"
-        src="../img/controls.png"
-        alt="controls"
-        style="display: none"
-      />
-      <!-- Desktop-Mute-Button -->
-      <button id="muteButton" title="Sound stummschalten" tabindex="-1">
-        <span id="muteIcon">🔊</span> Ton aus
-      </button>
+  <body>
+    <div id="orientationMessage" style="display: none">
+      <p>Please rotate your device to play the game.</p>
+      <a
+        href="./impressum.html"
+        class="position-absolute"
+        style="
+          color: white;
+          font-size: 20px;
+          font-weight: bold;
+          left: 30px;
+          bottom: 30px;
+          text-decoration: none;
+          font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        "
+      >
+        Impressum
+      </a>
     </div>
+    <div id="canvas-container" class="canvas-container" style="display: flex">
+      <div class="flex flex-column align-center">
+        <img class="title" src="./img/title.PNG" alt="El Pollo Loco" />
 
-    <!-- Mobile Touch-Steuerelemente -->
-    <div class="mobile-controls">
-      <div class="left-right-container">
-        <!-- Linke Richtung -->
-        <div id="leftBtn" class="touch-btn">←</div>
+        <div class="start position-relative" id="start">
+          <img src="img/10_BG/startscreen_1.jpg" alt="" />
+          <div class="start-container flex position-absolute">
+            <button class="menu-btn" onclick="startGame(event)">Starten</button>
+            <button
+              class="menu-btn"
+              onclick="window.location.href='gameRules.html'"
+              ;
+            >
+              Spielregeln
+            </button>
+          </div>
+        </div>
 
-        <!-- Rechte Richtung -->
-        <div id="rightBtn" class="touch-btn">→</div>
-      </div>
-
-      <!-- Neue Wrapper-Gruppe: Mute oben, dann andere Buttons -->
-      <div class="right-buttons-wrapper">
-        <!-- Mute-Button speziell für Mobilgeräte nur als Icon -->
-        <button
-          id="muteButtonMobile"
-          class="touch-btn"
-          title="Sound umschalten"
-          tabindex="0"
+        <div
+          id="fullscreen"
+          class="position-relative justify-center align-center"
         >
-          🔇
-        </button>
+          <div class="btn-container position-absolute">
+            <button id="toggleSounds" onclick="toggleSounds()">
+              <img src="img/SVG/volume-on.svg" alt="volume-switcher" />
+            </button>
+          </div>
+          <div
+            class="endscreen position-absolute"
+            id="game-over-screen"
+            style="display: none"
+          >
+            <img
+              src="img/9_intro_outro_screens/game_over/game-over-2.png"
+              alt=""
+            />
+            <div class="endscreen-btns flex position-absolute">
+              <button class="menu-btn" onclick="restartGame()">
+                Neuer Versuch
+              </button>
+            </div>
+          </div>
+          <div
+            class="endscreen position-absolute"
+            id="win-screen"
+            style="display: none"
+          >
+            <img src="img/9_intro_outro_screens/win/win-1.png" alt="" />
+            <div class="endscreen-btns flex position-absolute">
+              <button class="menu-btn" onclick="showStartScreen()">
+                Neuer Versuch
+              </button>
+            </div>
+          </div>
+          <canvas id="canvas" width="720" height="480"></canvas>
+          <div
+            id="mobileBtn-container"
+            class="flex justify-space-between position-absolute"
+          >
+            <div class="mobile-btns-left flex">
+              <button data-start="startMovingLeft" data-stop="stopMovingLeft">
+                <img src="img/SVG/arrow-left.svg" alt="" />
+              </button>
+              <button data-start="startMovingRight" data-stop="stopMovingRight">
+                <img src="img/SVG/arrow-right.svg" alt="" />
+              </button>
+            </div>
+            <div class="mobile-btns-right flex">
+              <button data-start="startThrowing">
+                <img src="img/SVG/throw-mobile.svg" alt="" />
+              </button>
+              <button data-start="startJumping">
+                <img src="img/SVG/jump-mobile.svg" alt="" />
+              </button>
+            </div>
+          </div>
+        </div>
+        <a
+          href="impressum.html"
+          id="impressum"
+          class="position-absolute"
+          style="
+            color: yellow;
+            font-size: 20px;
+            font-weight: bold;
+            bottom: 30px;
+            left: 50%;
+            transform: translateX(-50%);
+            text-decoration: none;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+          "
+        >
+          Impressum
+        </a>
 
-        <div class="right-buttons">
-          <div id="jumpBtn" class="touch-btn">↑</div>
-          <div id="throwBtn" class="touch-btn">✸</div>
+        <div class="spinner" id="spinner">
+          <img
+            src="./img/6_salsa_bottle/salsa_bottle.png"
+            alt="Loading Spinner"
+            class="spinner-img"
+          />
         </div>
       </div>
     </div>
 
-    <!-- Overlay-Hinweis im Hochformat auf Touch-Geräten -->
-    <div id="rotate-warning">
-      <p>Bitte drehe dein Gerät ins Querformat, um das Spiel zu spielen.</p>
-    </div>
-
-    <!-- Impressum-Link unten mittig -->
-    <footer class="footer-link">
-      <a href="impressum.html">Impressum</a>
-    </footer>
+    <img class="controls" src="./img/controls.png" alt="controls" />
   </body>
 </html>
