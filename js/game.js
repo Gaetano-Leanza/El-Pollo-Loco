@@ -1,222 +1,411 @@
 /**
- * Canvas-Element für die Spielfläche.
+ * Main game initialization and control script.
+ * Handles UI management, game state transitions, input controls, and device orientation.
+ * Manages the complete game lifecycle from startup to gameplay to end screens.
+ */
+
+// DOM element references for UI interaction
+/**
+ * Collection of keyboard key display elements.
+ * @type {NodeListOf<Element>}
+ */
+const imgRef = document.querySelectorAll(".key");
+
+/**
+ * Start screen container element.
+ * @type {HTMLElement}
+ */
+const startScreenRef = document.getElementById("start");
+
+/**
+ * Help dialog modal element.
+ * @type {HTMLDialogElement}
+ */
+const dialog = document.querySelector("dialog");
+
+/**
+ * Close button for the help dialog.
+ * @type {HTMLElement}
+ */
+const closeBtn = document.getElementById("close-btn");
+
+/**
+ * Desktop button container element.
+ * @type {HTMLElement}
+ */
+const btnContainer = document.getElementById("btn-container");
+
+/**
+ * Mobile button container element.
+ * @type {HTMLElement}
+ */
+const btnContainerMobile = document.getElementById("mobileBtn-container");
+
+/**
+ * Collection of all button elements in the UI.
+ * @type {NodeListOf<HTMLButtonElement>}
+ */
+const buttons = document.querySelectorAll("button");
+
+// Global game state variables
+/**
+ * Array storing all active interval IDs for cleanup purposes.
+ * @type {number[]}
+ */
+let intervalIds = [];
+
+/**
+ * Global flag tracking character's facing direction for throwing mechanics.
+ * @type {boolean}
+ */
+otherDirectionCharacter = false;
+
+/**
+ * Flag tracking fullscreen state.
+ * @type {boolean}
+ * @default false
+ */
+let fullscreen_on = false;
+
+/**
+ * Flag indicating if the game is currently running.
+ * @type {boolean}
+ * @default false
+ */
+let gameStarted = false;
+
+/**
+ * HTML5 Canvas element for game rendering.
  * @type {HTMLCanvasElement}
  */
 let canvas;
 
 /**
- * Instanz der Spielwelt.
+ * Main game world instance managing all game objects and logic.
  * @type {World}
  */
 let world;
 
 /**
- * Instanz des Tastatur-Status-Handlers.
+ * Input handler instance tracking keyboard and touch input states.
  * @type {Keyboard}
  */
 let keyboard = new Keyboard();
 
 /**
- * Status, ob der Sound stummgeschaltet ist.
- * @type {boolean}
+ * Audio manager instance handling all game sounds and music.
+ * @type {SoundManager}
  */
-let isMuted = false;
+let soundManager;
+
+// Initialize app when DOM is ready
+document.addEventListener("DOMContentLoaded", initializeApp);
 
 /**
- * Flag, ob das Mute-System bereits initialisiert wurde.
- * @type {boolean}
+ * Initializes the application when the page loads.
+ * Sets up input controls and device orientation handling.
  */
-let muteInitialized = false;
+function initializeApp() {
+  initializeMobileControls();
+  initializeKeyboardControls();
+  addOrientationListeners();
+}
 
 /**
- * Cache für geladene Audiodateien, um mehrfaches Laden zu vermeiden.
- * @type {Object.<string, HTMLAudioElement>}
+ * Creates a stoppable interval that can be cleared during game reset.
+ * Automatically tracks interval ID for cleanup purposes.
+ * @param {Function} fn - Function to execute at each interval
+ * @param {number} time - Interval duration in milliseconds
+ * @returns {number} The interval ID
  */
-const soundCache = {};
+function setStoppableInterval(fn, time) {
+  let id = setInterval(fn, time);
+  intervalIds.push(id);
+  return id;
+}
 
 /**
- * Event-Listener für das Laden der Seite, um den Mute-Zustand zu laden und das Mute-System zu initialisieren.
- * @event
+ * Stops the game by resetting intervals and pausing all audio.
+ * Safely terminates all game processes and resets state flags.
  */
-document.addEventListener("DOMContentLoaded", () => {
-  loadMuteState();
-  initMuteSystem();
+function stopGame() {
+  gameStarted = false;
+  resetIntervals();
+  soundManager.pauseAll();
+}
+
+/**
+ * Clears all registered intervals to prevent memory leaks.
+ * Essential for proper game cleanup and restart functionality.
+ */
+function resetIntervals() {
+  intervalIds.forEach(clearInterval);
+  intervalIds = [];
+}
+
+/**
+ * Restarts the game by cleaning up previous session and starting fresh.
+ * Ensures proper state reset between game sessions.
+ */
+function restartGame() {
+  resetIntervals();
+  startGame();
+}
+
+/**
+ * Shows the loading spinner during game initialization.
+ */
+function showLoadingSpinner() {
+  toggleVisibility("spinner", true);
+}
+
+/**
+ * Hides the loading spinner after game loads.
+ */
+function hideLoadingSpinner() {
+  toggleVisibility("spinner", false);
+}
+
+/**
+ * Initializes and starts a new game session.
+ * Creates all necessary game objects and transitions to game screen.
+ */
+async function startGame() {
+  // Verhindere mehrfaches Klicken
+  if (gameStarted) return;
+
+  const startButton = event?.target;
+  if (startButton) {
+    startButton.disabled = true;
+    startButton.textContent = "Lädt...";
+  }
+
+  try {
+    initLevel();
+    canvas = document.getElementById("canvas");
+
+    // Kurz warten für Canvas-Initialisierung
+    await new Promise((resolve) => setTimeout(resolve, 10));
+
+    soundManager = new SoundManager();
+    world = new World(canvas, keyboard);
+    showGameScreen();
+    gameStarted = true;
+    toggleButtonContainer();
+  } catch (error) {
+    console.error("Fehler beim Starten:", error);
+    gameStarted = false;
+  } finally {
+    if (startButton) {
+      startButton.disabled = false;
+      startButton.textContent = "Starten";
+    }
+  }
+}
+
+/**
+ * Opens the help dialog modal on the start screen.
+ * Provides game instructions and controls information.
+ */
+function openDialog() {
+  onclick = "window.location.href='gameRules.html'";
+}
+
+/**
+ * Closes the help dialog modal and removes background overlay.
+ */
+function dialogClose() {
+  dialog.close();
+  dialog.classList.remove("bg");
+}
+
+const toggleButton = document.getElementById("toggleSounds");
+
+toggleButton.addEventListener("click", toggleVolume);
+toggleButton.addEventListener("keydown", (e) => {
+  if (e.code === "Space" || e.code === "Enter") {
+    e.preventDefault(); // verhindert doppeltes Auslösen
+    toggleVolume();
+  }
 });
 
-/**
- * Initialisiert das Canvas, die Spielwelt, die Tastatur und die Touch-Steuerung.
- * Muss beim Start des Spiels aufgerufen werden.
- */
-function init() {
-  canvas = document.getElementById("canvas");
-  world = new World(canvas, keyboard);
-  initTouchControls();
-  initKeyboardListeners();
-}
+function toggleVolume() {
+  soundManager.toggleMute();
 
-/**
- * Spielt einen Sound ab, sofern der Sound nicht stummgeschaltet ist.
- * Nutzt einen Cache, um Sounds nicht mehrfach zu laden.
- * Erstellt eine Kopie des Audio-Elements, um gleichzeitiges Abspielen mehrerer Instanzen zu ermöglichen.
- *
- * @param {string} soundFile - Pfad zur Audiodatei oder Dateiname im Ordner "sounds".
- */
-function playSound(soundFile) {
-  const fullPath = soundFile.startsWith("sounds/")
-    ? soundFile
-    : `sounds/${soundFile}`;
-
-  if (!soundCache[fullPath]) {
-    const audio = new Audio(fullPath);
-    audio.preload = "auto";
-    soundCache[fullPath] = audio;
+  // Bild im Button aktualisieren
+  const img = toggleButton.querySelector("img");
+  if (img) {
+    img.src = soundManager.isMuted
+      ? "img/SVG/volume-off.svg"
+      : "img/SVG/volume-on.svg";
   }
 
-  const sound = soundCache[fullPath].cloneNode();
-  sound.muted = isMuted;
-  sound.volume = 1;
-  sound.play().catch((e) => {
-    if (e.name !== "AbortError") console.warn("Sound error:", e);
-  });
-}
+  // Fokus entfernen, damit Leertaste danach nicht erneut auslöst
+  toggleButton.blur();
 
-/**
- * Lädt den gespeicherten Mute-Zustand aus dem localStorage.
- * Setzt den globalen isMuted-Status entsprechend.
- */
-function loadMuteState() {
-  const savedMute = localStorage.getItem("gameMuted");
-  isMuted = savedMute === "true"; 
-}
-
-/**
- * Initialisiert das Mute-System:
- * Bindet den Mute-Button an die Umschaltfunktion und sorgt für korrekte Bedienbarkeit.
- * Führt die Initialisierung nur einmal aus.
- */
-function initMuteSystem() {
-  if (muteInitialized) return;
-
-  const muteButton = document.getElementById("muteButton");
-  const muteButtonMobile = document.getElementById("muteButtonMobile");
-
-  if (muteButton) {
-    const newButton = muteButton.cloneNode(true);
-    muteButton.parentNode.replaceChild(newButton, muteButton);
-    newButton.addEventListener("click", toggleMute);
-    newButton.addEventListener("keydown", (e) => {
-      if (["Enter", "Space", " "].includes(e.key)) {
-        e.preventDefault();
-      }
-    });
-  }
-
-  if (muteButtonMobile) {
-    const newButtonMobile = muteButtonMobile.cloneNode(true);
-    muteButtonMobile.parentNode.replaceChild(newButtonMobile, muteButtonMobile);
-    newButtonMobile.addEventListener("click", toggleMute);
-    newButtonMobile.addEventListener("keydown", (e) => {
-      if (["Enter", "Space", " "].includes(e.key)) {
-        e.preventDefault();
-      }
-    });
-  }
-
-  muteInitialized = true;
-  updateMuteUI();
-}
-
-/**
- * Schaltet den Mute-Status um, speichert den neuen Zustand und aktualisiert die UI.
- * Alle vorhandenen Sound-Objekte werden entsprechend stummgeschaltet oder aktiviert.
- */
-function toggleMute() {
-  isMuted = !isMuted;
-  localStorage.setItem("gameMuted", isMuted.toString());
-  updateMuteUI();
-
-  Object.values(soundCache).forEach((sound) => {
-    sound.muted = isMuted;
-  });
-}
-
-/**
- * Aktualisiert die Darstellung des Mute-Buttons und ggf. Icons im UI.
- * Ändert Text, Tooltip und Stil abhängig vom aktuellen Mute-Status.
- */
-function updateMuteUI() {
-  const desktopBtn = document.getElementById("muteButton");
-  const mobileBtn = document.getElementById("muteButtonMobile");
-
-  if (desktopBtn) {
-    desktopBtn.innerHTML = isMuted ? "🔇 Ton an" : "🔊 Ton aus";
-    desktopBtn.style.opacity = isMuted ? "0.6" : "1";
-    desktopBtn.title = isMuted ? "Sound einschalten" : "Sound stummschalten";
-  }
-
-  if (mobileBtn) {
-    mobileBtn.textContent = isMuted ? "🔇" : "🔊";
-    mobileBtn.style.opacity = isMuted ? "0.6" : "1";
-    mobileBtn.title = isMuted ? "Sound einschalten" : "Sound stummschalten";
+  // Falls Sound wieder an, Enemy-Sounds starten
+  if (!soundManager.isMuted && world) {
+    world.playSoundsOfEnemies();
   }
 }
 
 /**
- * Zeigt den Startbildschirm an und zeichnet das Startbild auf das Canvas.
- * Setzt das Spiel ggf. zurück.
+ * Updates keyboard key display to show pressed/unpressed states.
+ * Provides visual feedback for keyboard input on desktop.
+ * @param {string} img - CSS class index for default key image
+ * @param {string} img_active - CSS class index for pressed key image
+ */
+function toggleDisplay(img, img_active) {
+  imgRef[img].classList.add("d_none");
+  imgRef[img_active].classList.remove("d_none");
+}
+
+/**
+ * Toggles fullscreen mode and updates the fullscreen button icon.
+ * Handles cross-browser fullscreen API compatibility.
+ */
+function toggleFullscreen() {
+  const fullscreen = document.getElementById("fullscreen");
+  if (!fullscreen_on) {
+    enterFullscreen(fullscreen);
+    this.src = "img/SVG/resize-1.svg";
+    fullscreen_on = true;
+  } else {
+    exitFullscreen(fullscreen);
+    this.src = "img/SVG/resize-2.svg";
+    fullscreen_on = false;
+  }
+}
+
+/**
+ * Enters fullscreen mode with cross-browser compatibility.
+ * @param {HTMLElement} element - Element to make fullscreen
+ */
+function enterFullscreen(element) {
+  if (element.requestFullscreen) {
+    element.requestFullscreen();
+  } else if (element.msRequestFullscreen) {
+    element.msRequestFullscreen();
+  } else if (element.webkitRequestFullscreen) {
+    element.webkitRequestFullscreen();
+  }
+}
+
+/**
+ * Exits fullscreen mode with cross-browser compatibility.
+ */
+function exitFullscreen() {
+  if (document.exitFullscreen) {
+    document.exitFullscreen();
+  } else if (document.webkitExitFullscreen) {
+    document.webkitExitFullscreen();
+  }
+}
+
+/**
+ * Controls the visibility of UI elements by toggling display styles.
+ * @param {string} elementId - ID of the element to show/hide
+ * @param {boolean} isVisible - Whether element should be visible
+ */
+function toggleVisibility(elementId, isVisible) {
+  const element = document.getElementById(elementId);
+  if (element) {
+    element.style.display = isVisible ? "flex" : "none";
+  }
+}
+
+/**
+ * Transitions UI to show the main game screen.
+ * Hides all menus and shows game canvas with controls.
+ */
+function showGameScreen() {
+  toggleVisibility("fullscreen", true);
+  toggleVisibility("start", false);
+  toggleVisibility("game-over-screen", false);
+  toggleVisibility("win-screen", false);
+}
+
+/**
+ * Transitions UI to show the start/menu screen.
+ * Hides game and end screens, shows main menu.
  */
 function showStartScreen() {
-  if (world) resetGame();
-  canvas = document.getElementById("canvas");
-  const ctx = canvas.getContext("2d");
-  drawStartImage(ctx);
+  toggleVisibility("start", true);
+  toggleVisibility("fullscreen", false);
+  toggleVisibility("game-over-screen", false);
+  toggleVisibility("win-screen", false);
 }
 
 /**
- * Zeichnet das Startbild auf das übergebene Canvas-Rendering-Kontext-Objekt.
- *
- * @param {CanvasRenderingContext2D} ctx - Kontext des Canvas zum Zeichnen.
+ * Displays the game over screen and plays defeat music.
+ * Called when player character dies.
  */
-function drawStartImage(ctx) {
-  const startImage = new Image();
-  startImage.src = "../img/9_intro_outro_screens/start/startscreen_1.png";
-  startImage.onload = () => {
-    ctx.clearRect(0, 0, canvas.width, canvas.height);
-    ctx.drawImage(startImage, 0, 0, canvas.width, canvas.height);
-  };
+function showGameoverScreen() {
+  toggleVisibility("game-over-screen", true);
+  soundManager.play("gameOver");
 }
 
 /**
- * Startet das Spiel:
- * Versteckt Start-Buttons, zeigt Steuerungsbild und initialisiert das Spiel.
+ * Hides the game over screen.
+ * Used when transitioning back to other screens.
  */
-function startGame() {
-  document.getElementById("startButton").style.display = "none";
-  document.getElementById("gamerulesButton").style.display = "none";
-  document.getElementById("controlsImage").style.display = "block";
-  init();
+function hideGameOverScreen() {
+  toggleVisibility("game-over-screen", false);
 }
 
 /**
- * Setzt das Spiel zurück:
- * Löscht alle Intervalle, leert die Welt-Instanz, leert das Canvas und initialisiert die Tastatur neu.
+ * Displays the victory screen and plays winning music.
+ * Called when player completes all objectives.
  */
-function resetGame() {
-  if (world && world.clearAllIntervals) {
-    world.clearAllIntervals();
-  }
-  world = null;
-  const ctx = canvas.getContext("2d");
-  ctx.clearRect(0, 0, canvas.width, canvas.height);
-  keyboard = new Keyboard();
+function showWinningScreen() {
+  toggleVisibility("win-screen", true);
+  soundManager.play("win");
 }
 
 /**
- * Initialisiert Keyboard-Eventlistener für keydown und keyup.
+ * Hides the victory screen.
+ * Used when transitioning back to other screens.
  */
-function initKeyboardListeners() {
-  window.addEventListener("keydown", handleKeyDown);
-  window.addEventListener("keyup", handleKeyUp);
+function hideWinningScreen() {
+  toggleVisibility("win-screen", false);
+}
+
+/**
+ * Shows device orientation message and hides main content.
+ * Prompts mobile users to rotate device to landscape mode.
+ */
+function showRotateMessage() {
+  toggleVisibility("orientationMessage", true);
+  toggleVisibility("canvas-container", false);
+}
+
+/**
+ * Hides orientation message and shows main game content.
+ * Called when device is in proper landscape orientation.
+ */
+function showMainContent() {
+  toggleVisibility("orientationMessage", false);
+  toggleVisibility("canvas-container", true);
+}
+
+/**
+ * Checks current device orientation and shows appropriate content.
+ * Ensures game is only playable in landscape mode on mobile devices.
+ */
+function checkOrientation() {
+  window.innerHeight > window.innerWidth
+    ? showRotateMessage()
+    : showMainContent();
+}
+
+/**
+ * Sets up orientation change listeners for mobile devices.
+ * Monitors screen rotation and window resize events.
+ */
+function addOrientationListeners() {
+  checkOrientation();
+  window.addEventListener("resize", checkOrientation);
+  window.addEventListener("orientationchange", checkOrientation);
 }
 
 /**
@@ -297,70 +486,3 @@ function toggleFullscreen(element) {
     document.exitFullscreen();
   }
 }
-
-/**
- * Initialisiert die Touch-Steuerung, indem Touch-Eventlistener an die Steuerungs-Buttons gebunden werden.
- */
-function initTouchControls() {
-  const buttons = getTouchButtons();
-  if (!buttons) return;
-  addTouchEventListeners(buttons);
-}
-
-/**
- * Sammelt die Steuerungs-Buttons für Touch-Eingaben.
- *
- * @returns {Object|null} Objekt mit den Buttons oder null, falls nicht alle gefunden wurden.
- */
-function getTouchButtons() {
-  const leftBtn = document.getElementById("leftBtn");
-  const rightBtn = document.getElementById("rightBtn");
-  const jumpBtn = document.getElementById("jumpBtn");
-  const throwBtn = document.getElementById("throwBtn");
-
-  if (!(leftBtn && rightBtn && jumpBtn && throwBtn)) {
-    console.warn("Touch-Buttons nicht gefunden");
-    return null;
-  }
-
-  return { LEFT: leftBtn, RIGHT: rightBtn, SPACE: jumpBtn, D: throwBtn };
-}
-
-/**
- * Fügt Touch-Eventlistener an die Steuerungs-Buttons hinzu,
- * um die Keyboard-Flags bei Touchstart und Touchend zu setzen bzw. zurückzusetzen.
- *
- * @param {Object.<string, HTMLElement>} buttons - Objekt mit Tastenbezeichnungen als Schlüssel und Button-Elementen als Werte.
- */
-function addTouchEventListeners(buttons) {
-  Object.entries(buttons).forEach(([key, btn]) => {
-    btn.addEventListener("touchstart", (e) => {
-      e.preventDefault();
-      keyboard[key] = true;
-    });
-    btn.addEventListener("touchend", (e) => {
-      e.preventDefault();
-      keyboard[key] = false;
-    });
-  });
-}
-
-/**
- * Event-Handler für das Fenster-Resize-Event.
- * Passt die Spielwelt bei Änderung der Fenstergröße an.
- */
-window.addEventListener("resize", () => {
-  if (canvas && world && world.resize) {
-    world.resize();
-  }
-});
-
-/**
- * Event-Handler für Änderungen des Vollbildmodus.
- * Passt die Spielwelt an die neue Größe an.
- */
-document.addEventListener("fullscreenchange", () => {
-  if (canvas && world && world.resize) {
-    world.resize();
-  }
-});
