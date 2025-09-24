@@ -1,22 +1,94 @@
 /**
- * Repräsentiert ein statisches Hintergrundobjekt im Spiel, das sich mit der Kamera mitbewegt.
- * Erbt von MovableObject.
+ * Represents a background object that extends MovableObject with parallax scrolling capabilities.
+ * This class handles background layers with different movement speeds to create depth effects.
+ * @extends MovableObject
  */
 class BackgroundObject extends MovableObject {
-  /** @type {number} Breite des Hintergrundbildes in Pixel. */
-  width = 720;
+  /**
+   * Array of image paths for different background layers.
+   * Index 0: Air layer (static)
+   * Index 1: Third layer (slowest moving)
+   * Index 2: Second layer (medium speed)
+   * Index 3: First layer (static foreground)
+   * @type {string[]}
+   * @static
+   */
+  IMAGES = [
+    "img/5_background/layers/air.png",
+    "img/5_background/layers/3_third_layer/full.png",
+    "img/5_background/layers/2_second_layer/full.png",
+    "img/5_background/layers/1_first_layer/full.png",
+  ];
 
-  /** @type {number} Höhe des Hintergrundbildes in Pixel. */
+  /**
+   * Array of movement speeds corresponding to each background layer.
+   * Higher values create faster parallax movement.
+   * Index 0: 0 (static air layer)
+   * Index 1: 9 (fastest moving layer)
+   * Index 2: 7 (medium speed layer)
+   * Index 3: 0 (static foreground layer)
+   * @type {number[]}
+   * @static
+   */
+  speeds = [
+    0,
+    9,
+    7,
+    0, 
+  ];
+
+  /**
+   * The current movement speed of this background object instance.
+   * @type {number}
+   */
+  speed;
+
+  /**
+   * Index variable (purpose unclear from current implementation).
+   * @type {number}
+   */
+  i; 
+
+  /**
+   * Height of the background object in pixels.
+   * @type {number}
+   * @default 480
+   */
   height = 480;
 
   /**
-   * Erzeugt ein neues Hintergrundobjekt an einer bestimmten x-Position.
-   * @param {string} imagePath - Pfad zur Hintergrundgrafik.
-   * @param {number} x - Horizontale Position des Objekts in der Spielwelt.
+   * Width of the background object in pixels.
+   * @type {number}
+   * @default 1440
    */
-  constructor(imagePath, x) {
-    super().loadImage(imagePath);
+  width = 1440;
+
+  /**
+   * Creates a new BackgroundObject instance.
+   * @param {number} index - Index to determine which image and speed to use (0-3)
+   * @param {number} x - Initial x-position of the background object
+   */
+  constructor(index, x) {
+    super();
     this.x = x;
-    this.y = 480 - this.height; // Positioniert das Bild am unteren Rand des Canvas
+    this.loadImage(this.IMAGES[index]);
+    this.y = 480 - this.height;
+    this.speed = this.speeds[index];
+  }
+
+  /**
+   * Moves the background object to the left by adding the speed value to x-position.
+   * Used for parallax scrolling when camera/player moves right.
+   */
+  moveLeft() {
+    this.x += this.speed;
+  }
+
+  /**
+   * Moves the background object to the right by subtracting the speed value from x-position.
+   * Used for parallax scrolling when camera/player moves left.
+   */
+  moveRight() {
+    this.x -= this.speed;
   }
 }
