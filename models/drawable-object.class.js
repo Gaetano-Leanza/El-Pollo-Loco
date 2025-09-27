@@ -1,33 +1,58 @@
 /**
- * Base class for all drawable objects in the game.
- * Provides basic image loading, drawing, and collision detection.
+ * Base class for all drawable game objects that can be rendered to the canvas.
+ * Provides common functionality for image loading, drawing, and debug frame rendering.
+ * This is the foundation class for all visual game elements.
  */
 class DrawableObject {
-  /** @type {HTMLImageElement} Current image displayed */
-  img;
-
-  /** @type {Object.<string, HTMLImageElement>} Cache of preloaded images */
-  imageCache = {};
-
-  /** @type {number} Index of the current image in an animation sequence */
-  currentImage = 0;
-
-  /** @type {number} Horizontal position on the canvas */
+  /**
+   * X-coordinate position of the object on the canvas.
+   * @type {number}
+   * @default 120
+   */
   x = 120;
 
-  /** @type {number} Vertical position on the canvas */
-  y = 280;
-
-  /** @type {number} Height of the drawable object */
-  height = 150;
-
-  /** @type {number} Width of the drawable object */
-  width = 100;
+  /**
+   * Y-coordinate position of the object on the canvas.
+   * @type {number}
+   * @default 190
+   */
+  y = 190;
 
   /**
-   * Loads a single image from the specified path.
-   * @param {string} path - The URL/path to the image.
-   * @returns {void}
+   * Height of the object in pixels.
+   * @type {number}
+   */
+  height;
+
+  /**
+   * Width of the object in pixels.
+   * @type {number}
+   */
+  width;
+
+  /**
+   * HTML Image element for the current object sprite.
+   * @type {HTMLImageElement}
+   */
+  img;
+
+  /**
+   * Cache object storing preloaded images by their file path.
+   * Used for animation frames and performance optimization.
+   * @type {Object.<string, HTMLImageElement>}
+   */
+  imageCache = {};
+
+  /**
+   * Index of the current image being displayed in animation sequences.
+   * @type {number}
+   * @default 0
+   */
+  currentImage = 0;
+
+  /**
+   * Loads a single image from the specified path and assigns it to the object.
+   * @param {string} path - File path to the image resource
    */
   loadImage(path) {
     this.img = new Image();
@@ -35,40 +60,88 @@ class DrawableObject {
   }
 
   /**
-   * Draws the current image on the given canvas context at the object's position and size.
-   * @param {CanvasRenderingContext2D} ctx - The canvas rendering context.
-   * @returns {void}
+   * Draws the object to the canvas at its current position and size.
+   * Includes error handling for missing or corrupted images.
+   * @param {CanvasRenderingContext2D} ctx - The 2D rendering context of the canvas
    */
   draw(ctx) {
-    ctx.drawImage(this.img, this.x, this.y, this.width, this.height);
-  }
-
-  /**
-   * Draws a red bounding box (hitbox) around the object for debugging purposes.
-   * Only applies for instances of Character, Chicken, ChickenSmall, or Endboss.
-   * @param {CanvasRenderingContext2D} ctx - The canvas rendering context.
-   * @returns {void}
-   */
-  drawFrame(ctx) {
-    if (
-      this instanceof Character ||
-      this instanceof Chicken ||
-      this instanceof ChickenSmall ||
-      this instanceof Endboss
-    ) {
-      const hb = this.getHitbox();
-      ctx.beginPath();
-      ctx.lineWidth = "3";
-      ctx.strokeStyle = "red";
-      ctx.rect(hb.x, hb.y, hb.width, hb.height);
-      ctx.stroke();
+    try {
+      ctx.drawImage(this.img, this.x, this.y, this.width, this.height);
+    } catch (e) {
+      console.warn("Error loading image", e);
+      console.log("Could not load image,", this.img);
     }
   }
 
   /**
-   * Preloads multiple images from an array of paths and stores them in the image cache.
-   * @param {string[]} arr - Array of image URLs/paths.
-   * @returns {void}
+   * Draws debug collision frames around objects based on their type.
+   * Uses different colors for different object categories for visual debugging.
+   * @param {CanvasRenderingContext2D} ctx - The 2D rendering context of the canvas
+   */
+  drawFrame(ctx) {
+    if (this instanceof Chicken ||this instanceof Endboss ||this instanceof ChickenSmall) {
+      this.drawFrameOfEnemies(ctx);
+    } else if (
+      this instanceof Coin ||this instanceof Bottle ||this instanceof ThrowableObject) {
+        this.drawFrameOfObjects(ctx);
+     
+    } else if (this instanceof Character) {
+      this.drawFrameOfCharacter(ctx);
+    }
+  }
+
+  /**
+   * Draws blue collision frame for enemy objects (Chicken, Endboss, ChickenSmall).
+   * Frame respects the object's collision offset values.
+   * @param {CanvasRenderingContext2D} ctx - The 2D rendering context of the canvas
+   */
+  drawFrameOfEnemies(ctx){
+    ctx.beginPath();
+    ctx.lineWidth = "2";
+    ctx.strokeStyle = "blue";
+    ctx.rect(this.x + this.offset.left,
+      this.y + this.offset.top,
+      this.width - this.offset.left - this.offset.right,
+      this.height - this.offset.top - this.offset.bottom);
+    ctx.stroke();
+  }
+
+  /**
+   * Draws yellow collision frame for collectible and throwable objects.
+   * Frame respects the object's collision offset values.
+   * @param {CanvasRenderingContext2D} ctx - The 2D rendering context of the canvas
+   */
+  drawFrameOfObjects(ctx){
+    ctx.beginPath();
+    ctx.lineWidth = "2";
+    ctx.strokeStyle = "yellow";
+    ctx.rect(this.x + this.offset.left,
+      this.y + this.offset.top,
+      this.width - this.offset.left - this.offset.right,
+      this.height - this.offset.top - this.offset.bottom);
+    ctx.stroke();
+  }
+
+  /**
+   * Draws green collision frame for the main character.
+   * Frame respects the object's collision offset values.
+   * @param {CanvasRenderingContext2D} ctx - The 2D rendering context of the canvas
+   */
+  drawFrameOfCharacter(ctx){
+    ctx.beginPath();
+    ctx.lineWidth = "2";
+    ctx.strokeStyle = "green";
+    ctx.rect(this.x + this.offset.left,
+      this.y + this.offset.top,
+      this.width - this.offset.left - this.offset.right,
+      this.height - this.offset.top - this.offset.bottom);
+    ctx.stroke();
+  }
+
+  /**
+   * Preloads multiple images into the image cache for animation purposes.
+   * Improves performance by loading all animation frames upfront.
+   * @param {string[]} arr - Array of file paths to image resources
    */
   loadImages(arr) {
     arr.forEach((path) => {
@@ -76,39 +149,5 @@ class DrawableObject {
       img.src = path;
       this.imageCache[path] = img;
     });
-  }
-
-  /**
-   * Checks for collision between this object and another drawable object.
-   * Uses hitboxes if available; otherwise, uses default bounding boxes.
-   * @param {DrawableObject} obj - The other object to check collision against.
-   * @returns {boolean} True if objects collide, false otherwise.
-   */
-  isColliding(obj) {
-    const thisHitbox = this.getHitbox
-      ? this.getHitbox()
-      : this.getDefaultHitbox();
-    const objHitbox = obj.getHitbox ? obj.getHitbox() : obj.getDefaultHitbox();
-
-    return (
-      thisHitbox.x < objHitbox.x + objHitbox.width &&
-      thisHitbox.x + thisHitbox.width > objHitbox.x &&
-      thisHitbox.y < objHitbox.y + objHitbox.height &&
-      thisHitbox.y + thisHitbox.height > objHitbox.y
-    );
-  }
-
-  /**
-   * Returns the default hitbox, which is the object's full bounding rectangle.
-   * Can be overridden by subclasses for more precise hitboxes.
-   * @returns {{x: number, y: number, width: number, height: number}} Default bounding box.
-   */
-  getDefaultHitbox() {
-    return {
-      x: this.x,
-      y: this.y,
-      width: this.width,
-      height: this.height,
-    };
   }
 }
