@@ -1,51 +1,60 @@
 /**
- * Represents a game level containing enemies, clouds, background objects, coins, and bottles.
+ * Represents a game level containing all objects and entities within a specific area.
+ * Acts as a container for enemies, environmental elements, collectibles, and level boundaries.
+ * Defines the playable space and all interactive elements within it.
  */
 class Level {
-  /** @type {Array} Array of enemy objects present in the level */
+  /**
+   * Array of enemy objects (chickens, small chickens, endboss) present in this level.
+   * @type {MovableObject[]}
+   */
   enemies;
 
-  /** @type {Array} Array of cloud objects for background decoration */
+  /**
+   * Array of cloud objects providing atmospheric background elements.
+   * @type {Cloud[]}
+   */
   clouds;
 
-  /** @type {Array} Array of background objects */
+  /**
+   * Array of background layer objects for parallax scrolling effects.
+   * @type {BackgroundObject[]}
+   */
   backgroundObjects;
 
-  /** @type {Array} Array of coin objects collectible in the level */
+  /**
+   * Array of collectible coin objects scattered throughout the level.
+   * @type {Coin[]}
+   */
   coins;
 
-  /** @type {Array} Array of bottle objects collectible in the level */
+  /**
+   * Array of collectible bottle objects that can be picked up and thrown.
+   * @type {CollectibleItem[]}
+   */
   bottles;
 
-  /** @type {number} The x-coordinate representing the end of the level */
-  level_end_x = 4300;
+  /**
+   * X-coordinate marking the end boundary of the level.
+   * Used for level completion detection and boundary constraints.
+   * @type {number}
+   * @default 5200
+   */
+  level_end_x = 5200;
 
   /**
-   * Creates a new Level instance.
-   * @param {Array} enemies - The enemies in the level.
-   * @param {Array} clouds - The clouds in the level.
-   * @param {Array} backgroundObjects - The background objects in the level.
-   * @param {Array} [coins=[]] - The coins in the level (optional).
+   * Creates a new Level instance with all specified game objects.
+   * @param {MovableObject[]} enemies - Array of enemy objects for this level
+   * @param {Cloud[]} clouds - Array of cloud objects for atmospheric effects
+   * @param {BackgroundObject[]} backgroundObjects - Array of background layers for parallax
+   * @param {Coin[]} coins - Array of collectible coin objects
+   * @param {CollectibleItem[]} bottles - Array of collectible bottle objects
    */
-  constructor(enemies, clouds, backgroundObjects, coins) {
+  constructor(enemies, clouds, backgroundObjects, coins, bottles) {
     this.enemies = enemies;
     this.clouds = clouds;
     this.backgroundObjects = backgroundObjects;
-    this.coins = coins || [];
-    this.bottles = this.generateBottles();
-  }
-
-  /**
-   * Generates an array of bottle objects placed randomly in the level.
-   * @returns {Array} Array of generated Bottle instances.
-   */
-  generateBottles() {
-    const bottles = [];
-    for (let i = 0; i < 20; i++) {
-      const x = Math.random() * 2500;
-      const y = 400;
-      bottles.push(new Bottle(x, y));
-    }
-    return bottles;
+    this.coins = coins;
+    this.bottles = bottles;
   }
 }
