@@ -1,94 +1,274 @@
 /**
- * Represents an object that can move and interact within the game world.
- * Extends the DrawableObject class with movement, collision, and physics functionality.
+ * Base class for all objects that can move and interact in the game world.
+ * Provides physics simulation, collision detection, animation, state management, and common behaviors.
+ * Extends DrawableObject to add movement capabilities, health systems, and game mechanics.
+ * @extends DrawableObject
  */
 class MovableObject extends DrawableObject {
-  /** @type {number} Horizontal movement speed */
+  /**
+   * Horizontal movement speed in pixels per frame.
+   * @type {number}
+   * @default 0.15
+   */
   speed = 0.15;
 
-  /** @type {boolean} Indicates if the object is facing or moving in the opposite direction */
+  /**
+   * Direction flag for horizontal facing (false = right, true = left).
+   * Used for image flipping and movement direction.
+   * @type {boolean}
+   * @default false
+   */
   otherDirection = false;
 
-  /** @type {number} Vertical speed (used for jumping/falling) */
+  /**
+   * Vertical velocity for jumping and falling physics.
+   * Positive values move upward, negative values move downward.
+   * @type {number}
+   * @default 0
+   */
   speedY = 0;
 
-  /** @type {number} Acceleration due to gravity */
+  /**
+   * Gravity acceleration that reduces speedY over time.
+   * @type {number}
+   * @default 2.5
+   */
   acceleration = 2.5;
 
-  /** @type {number} Current energy (health) of the object */
-  energy = 100;
-
-  /** @type {number} Timestamp (in ms) of the last hit taken */
-  lastHit = 0;
-
-  /** @type {number} Index of the current animation image */
-  currentImage = 0;
+  /**
+   * Health/energy points of the object (0-100).
+   * @type {number}
+   */
+  energy;
 
   /**
-   * Applies gravity effect to the object by modifying vertical position and speed.
-   * Runs approximately 25 times per second.
+   * Coin collection progress (0-100).
+   * @type {number}
+   * @default 0
+   */
+  wealth = 0;
+
+  /**
+   * Bottle/salsa inventory count (0-100).
+   * @type {number}
+   * @default 0
+   */
+  salsa = 0;
+
+  /**
+   * Timestamp of the last hit received (for hurt state timing).
+   * @type {number}
+   * @default 0
+   */
+  lastHit = 0;
+
+  /**
+   * Timestamp of the last player activity (for sleep detection).
+   * @type {number}
+   */
+  lastActive = Date.now();
+
+  /**
+   * Duration in milliseconds before object enters sleep state.
+   * @type {number}
+   * @default 15000
+   */
+  sleepTime = 15000;
+
+  /**
+   * Flag indicating if object is currently in sleep state.
+   * @type {boolean}
+   * @default false
+   */
+  isSleeping = false;
+
+  /**
+   * Counter for bounce-back animation frames when hit.
+   * @type {number}
+   * @default 0
+   */
+  countForBounce = 0;
+
+  /**
+   * Y-coordinate representing the ground level for this object.
+   * @type {number}
+   */
+  onGroundY;
+
+  /**
+   * Left boundary of the playable area.
+   * @type {number}
+   * @default 10
+   */
+  xStart = 10;
+
+  /**
+   * Right boundary of the playable area.
+   * @type {number}
+   * @default 4000
+   */
+  xEnd = 4000;
+
+  /**
+   * Collision detection offset values for precise hit box calculations.
+   * Allows fine-tuning of collision boundaries independent of sprite dimensions.
+   * @type {Object}
+   * @property {number} top - Top offset in pixels
+   * @property {number} left - Left offset in pixels
+   * @property {number} right - Right offset in pixels
+   * @property {number} bottom - Bottom offset in pixels
+   */
+  offset = {
+    top: 0,
+    left: 0,
+    right: 0,
+    bottom: 0,
+  };
+
+  /**
+   * Current collision boundaries calculated from position, dimensions, and offsets.
+   * @type {Object}
+   */
+  hitbox = {};
+
+  /**
+   * Creates a new MovableObject and initializes sound manager and collision box.
+   */
+  constructor() {
+    super();
+    this.soundManager = SoundManager.instance;
+    this.hitbox = this.getHitBox();
+  }
+
+  /**
+   * Applies gravity physics simulation to the object.
+   * Continuously reduces vertical velocity and updates position at 25fps.
+   * Prevents falling below ground level.
    */
   applyGravity() {
-    setInterval(() => {
+    setStoppableInterval(() => {
       if (this.isAboveGround() || this.speedY > 0) {
         this.y -= this.speedY;
+        this.y = Math.min(this.y, this.onGroundY);
         this.speedY -= this.acceleration;
       }
     }, 1000 / 25);
   }
 
   /**
-   * Determines if the object is currently above the ground.
-   * Throwable objects are always considered above ground.
-   * @returns {boolean} True if above ground, otherwise false.
+   * Checks if the object is currently airborne (above ground level).
+   * @returns {boolean} True if object is above its ground level
    */
   isAboveGround() {
-    if (this instanceof ThrowableObject) {
-      return true;
-    } else {
-      return this.y < 160;
-    }
+    return this.y < this.onGroundY;
   }
 
   /**
-   * Checks if this object is colliding with another MovableObject.
-   * Uses hitboxes for collision detection.
-   * @param {MovableObject} mo - The other movable object to check collision against.
-   * @returns {boolean} True if colliding, false otherwise.
+   * Plays animation by cycling through provided image array.
+   * Automatically loops back to first image when reaching the end.
+   * @param {string[]} images - Array of image paths for animation frames
    */
-  isColliding(mo) {
-    let thisHitbox = this.getHitbox();
-    let moHitbox = mo.getHitbox();
-
-    return (
-      thisHitbox.x + thisHitbox.width > moHitbox.x &&
-      thisHitbox.y + thisHitbox.height > moHitbox.y &&
-      thisHitbox.x < moHitbox.x + moHitbox.width &&
-      thisHitbox.y < moHitbox.y + moHitbox.height
-    );
+  playAnimation(images) {
+    let i = this.currentImage % images.length;
+    let path = images[i];
+    this.img = this.imageCache[path];
+    this.currentImage++;
   }
 
   /**
-   * Returns the hitbox rectangle used for collision detection.
-   * By default, this is the full rectangle of the object.
-   * @returns {{x: number, y: number, width: number, height: number}} The hitbox.
+   * Resets activity timer and wakes object from sleep state.
+   * Stops snoring sound if playing.
    */
-  getHitbox() {
+  resetLastAction() {
+    this.lastActive = Date.now();
+    this.isSleeping = false; // Character wakes up
+    SoundManager.instance.pause("snoring");
+  }
+
+  /**
+   * Moves the object rightward by its current speed.
+   */
+  moveRight() {
+    this.x += this.speed;
+  }
+
+  /**
+   * Moves the object leftward by its current speed.
+   */
+  moveLeft() {
+    this.x -= this.speed;
+  }
+
+  /**
+   * Makes the object jump with upward velocity and plays jump sound.
+   */
+  jump() {
+    this.speedY = 30;
+    this.soundManager.play("jump");
+  }
+
+  /**
+   * Calculates and returns the current collision boundaries.
+   * Uses object position, dimensions, and offset values for precise collision detection.
+   * @returns {Object} Hit box with x, y, width, height, left, top, right, bottom properties
+   */
+  getHitBox() {
     return {
-      x: this.x,
-      y: this.y,
-      width: this.width,
-      height: this.height,
+      x: this.x + this.offset.left,
+      y: this.y + this.offset.top,
+      width: this.width - this.offset.left - this.offset.right,
+      height: this.height - this.offset.bottom - this.offset.top,
+      left: this.x + this.offset.left,
+      top: this.y + this.offset.top,
+      right: this.x + this.width - this.offset.right,
+      bottom: this.height - this.offset.bottom + this.y,
     };
   }
 
   /**
-   * Reduces energy by 5 when the object is hit.
-   * Sets energy to zero if it drops below zero.
-   * Updates the lastHit timestamp.
+   * Checks if this object is colliding with another movable object.
+   * Uses AABB (Axis-Aligned Bounding Box) collision detection.
+   * @param {MovableObject} mo - The other movable object to check collision with
+   * @returns {boolean} True if the objects are colliding
+   */
+  isColliding(mo) {
+    return (
+      this.hitbox.right > mo.hitbox.left &&
+      this.hitbox.left < mo.hitbox.right &&
+      this.hitbox.top < mo.hitbox.bottom &&
+      this.hitbox.bottom > mo.hitbox.top
+    );
+  }
+
+  /**
+   * Checks if this object is jumping on top of another object (for enemy stomping).
+   * Requires being airborne and landing more horizontally than vertically on target.
+   * @param {MovableObject} mo - The object being jumped on
+   * @returns {boolean} True if this is a valid jumping-on collision
+   */
+  isJumpingOn(mo) {
+    return (
+      this.hitbox.right - mo.hitbox.left > this.hitbox.bottom - mo.hitbox.top &&
+      this.isAboveGround()
+    );
+  }
+
+  /**
+   * Gives the object upward velocity after successfully jumping on an enemy.
+   */
+  bounceUp() {
+    this.speedY = 25;
+  }
+
+  /**
+   * Handles taking damage from enemy collision.
+   * Reduces energy, plays hit sound, triggers bounce-back effect.
    */
   hit() {
-    this.energy -= 5;
+    this.soundManager.play("hit");
+    this.energy -= 10;
+    this.bounceBack();
+    this.countForBounce = 0;
     if (this.energy < 0) {
       this.energy = 0;
     } else {
@@ -97,68 +277,103 @@ class MovableObject extends DrawableObject {
   }
 
   /**
-   * Checks if the object is dead (energy is zero).
-   * @returns {boolean} True if dead, otherwise false.
+   * Creates a knockback effect when hit by moving object in opposite direction.
+   * Runs for 10 frames at 30ms intervals.
    */
-  isDead() {
-    return this.energy === 0;
+  bounceBack() {
+    setStoppableInterval(() => {
+      if (this.countForBounce <= 10) {
+        this.otherDirection ? this.moveRight() : this.moveLeft();
+        this.countForBounce += 1;
+      }
+    }, 30);
   }
 
   /**
-   * Checks if the object was hurt within the last second.
-   * @returns {boolean} True if hurt recently, otherwise false.
+   * Checks if the object is currently in hurt state (recently took damage).
+   * @returns {boolean} True if object was hit within the last 1 second
    */
   isHurt() {
-    let timepassed = new Date().getTime() - this.lastHit;
-    timepassed = timepassed / 1000; // convert ms to seconds
-    return timepassed < 1;
+    let timePassed = new Date().getTime() - this.lastHit; // difference in ms
+    timePassed = timePassed / 1000; // difference in s
+    return timePassed < 1; // animation is shown for 1 sec if character gets hurt
   }
 
   /**
-   * Moves the object to the right by increasing its x-position.
+   * Checks if the object is in attack state (for endboss behavior).
+   * Attack window occurs 1-2 seconds after being hurt.
+   * @returns {boolean} True if object is in attack timing window
    */
-  moveRight() {
-    this.x += this.speed;
+  attacks() {
+    let timePassed = new Date().getTime() - this.lastHit; // difference in ms
+    timePassed = timePassed / 1000; // difference in s
+    return timePassed > 1 && timePassed <= 2; // animation is shown for 1 sec if endboss gets hurt
   }
 
   /**
-   * Moves the object to the left by decreasing its x-position.
+   * Checks if the object has died (energy depleted).
+   * @returns {boolean} True if energy has reached zero
    */
-  moveLeft() {
-    this.x -= this.speed;
+  isDead() {
+    return this.energy == 0;
   }
 
   /**
-   * Plays an animation by cycling through an array of image paths.
-   * Updates the current image displayed.
-   * @param {string[]} images - Array of image paths for the animation.
+   * Checks if the object should enter sleep state due to inactivity.
+   * @returns {boolean} True if no activity for sleepTime duration (15 seconds)
    */
-  playAnimation(images) {
-    if (!images || images.length === 0) return;
-    this.currentImage = this.currentImage % images.length;
-    let path = images[this.currentImage];
-    this.img = this.imageCache[path];
-    this.currentImage++;
+  isAsleep() {
+    let timePassed = new Date().getTime() - this.lastActive;
+    if (timePassed >= this.sleepTime) {
+      this.isSleeping = true; // Set isSleeping to true when 15 seconds have passed
+      return true;
+    } else {
+      return false;
+    }
   }
 
   /**
-   * Initiates a jump by setting the vertical speed upwards.
+   * Checks if the object is in idle state (awake but not sleeping).
+   * @returns {boolean} True if object is not currently sleeping
    */
-  jump() {
-    this.speedY = 30;
+  idle() {
+    return !this.isSleeping;
   }
 
   /**
-   * Draws a red rectangle around the object’s hitbox on the canvas context.
-   * Useful for debugging collision boundaries.
-   * @param {CanvasRenderingContext2D} ctx - The canvas rendering context.
+   * Handles coin collection with sound effect and wealth increase.
+   * Caps wealth at 100 and increments by 10 per coin.
    */
-  drawFrame(ctx) {
-    ctx.beginPath();
-    ctx.lineWidth = "2";
-    ctx.strokeStyle = "red";
-    const box = this.getHitbox ? this.getHitbox() : this;
-    ctx.rect(box.x, box.y, box.width, box.height);
-    ctx.stroke();
+  collectCoin() {
+    if (this.wealth < 100) {
+      this.wealth += 10;
+    }
+    SoundManager.instance.play("coin");
+  }
+
+  /**
+   * Handles bottle collection with sound effect and salsa inventory increase.
+   * Caps salsa inventory at 100 and increments by 10 per bottle.
+   */
+  collectBottle() {
+    if (this.salsa < 100) {
+      this.salsa += 10;
+    }
+    SoundManager.instance.play("bottle");
+  }
+
+  /**
+   * Handles taking damage when hit by projectiles or other damage sources.
+   * Reduces energy by 10 points and updates hit timestamp if still alive.
+   */
+  takeDamage() {
+    if (!this.isDead()) {
+      this.energy -= 10;
+      if (this.energy < 0) {
+        this.energy = 0;
+      } else {
+        this.lastHit = new Date().getTime();
+      }
+    }
   }
 }
