@@ -1,157 +1,205 @@
 /**
- * StatusBar-Klasse zur Darstellung verschiedener Statusleisten (z.B. Gesundheit, Münzen).
- * Erweitert DrawableObject und lädt Bilder je nach Typ vor.
+ * Represents a status bar UI element that displays various game metrics with visual progress indicators.
+ * Supports different types: health, coin collection, bottle inventory, and endboss health.
+ * Each type has color-coded imagery and appropriate positioning on screen.
+ * @extends DrawableObject
  */
-class StatusBar extends DrawableObject {
-  /** @type {number} Aktueller Prozentsatz der Statusleiste (0-100) */
-  percentage = 100;
-  /** @type {boolean} Gibt an, ob alle Bilder geladen wurden */
-  imagesLoaded = false;
-  /** @type {number} Letzter gesetzter Prozentsatz, um unnötige Updates zu vermeiden */
-  lastPercentage = -1;
-  /** @type {Object.<string, HTMLImageElement>} Zwischenspeicher für geladene Bilder */
-  imageCache = {};
+class Statusbar extends DrawableObject {
+  /**
+   * Array of image paths for health status bar with color-coded progression.
+   * Colors change from orange (low) to blue (medium) to green (high).
+   * @type {string[]}
+   * @static
+   */
+  IMAGES = [
+    "img/7_statusbars/1_statusbar/2_statusbar_health/orange/0.png",
+    "img/7_statusbars/1_statusbar/2_statusbar_health/orange/20.png",
+    "img/7_statusbars/1_statusbar/2_statusbar_health/blue/40.png",
+    "img/7_statusbars/1_statusbar/2_statusbar_health/blue/60.png",
+    "img/7_statusbars/1_statusbar/2_statusbar_health/green/80.png",
+    "img/7_statusbars/1_statusbar/2_statusbar_health/green/100.png",
+  ];
 
   /**
-   * Erzeugt eine neue StatusBar-Instanz.
-   * @param {string} type - Typ der StatusBar (z.B. "health", "bottle", "coin", "endboss").
-   * @param {number} x - X-Position auf dem Canvas.
-   * @param {number} y - Y-Position auf dem Canvas.
+   * Array of image paths for coin collection status bar in blue theme.
+   * @type {string[]}
+   * @static
    */
-  constructor(type, x, y) {
+  IMAGES_COIN = [
+    "img/7_statusbars/1_statusbar/1_statusbar_coin/blue/0.png",
+    "img/7_statusbars/1_statusbar/1_statusbar_coin/blue/20.png",
+    "img/7_statusbars/1_statusbar/1_statusbar_coin/blue/40.png",
+    "img/7_statusbars/1_statusbar/1_statusbar_coin/blue/60.png",
+    "img/7_statusbars/1_statusbar/1_statusbar_coin/blue/80.png",
+    "img/7_statusbars/1_statusbar/1_statusbar_coin/blue/100.png",
+  ];
+
+  /**
+   * Array of image paths for bottle/salsa inventory status bar in blue theme.
+   * @type {string[]}
+   * @static
+   */
+  IMAGES_BOTTLE = [
+    "img/7_statusbars/1_statusbar/3_statusbar_bottle/blue/0.png",
+    "img/7_statusbars/1_statusbar/3_statusbar_bottle/blue/20.png",
+    "img/7_statusbars/1_statusbar/3_statusbar_bottle/blue/40.png",
+    "img/7_statusbars/1_statusbar/3_statusbar_bottle/blue/60.png",
+    "img/7_statusbars/1_statusbar/3_statusbar_bottle/blue/80.png",
+    "img/7_statusbars/1_statusbar/3_statusbar_bottle/blue/100.png",
+  ];
+
+  /**
+   * Array of image paths for endboss health status bar in orange theme.
+   * @type {string[]}
+   * @static
+   */
+  IMAGES_ENDBOSS = [
+    "img/7_statusbars/2_statusbar_endboss/orange/orange0.png",
+    "img/7_statusbars/2_statusbar_endboss/orange/orange20.png",
+    "img/7_statusbars/2_statusbar_endboss/orange/orange40.png",
+    "img/7_statusbars/2_statusbar_endboss/orange/orange60.png",
+    "img/7_statusbars/2_statusbar_endboss/orange/orange80.png",
+    "img/7_statusbars/2_statusbar_endboss/orange/orange100.png",
+  ];
+
+  /**
+   * Current image array being used by this status bar instance.
+   * Set during construction based on status bar type.
+   * @type {string[]}
+   */
+  images = [];
+
+  /**
+   * Current percentage value (0-100) determining which image to display.
+   * @type {number}
+   */
+  percentage;
+
+  /**
+   * Movement speed for animated status bars (specifically endboss).
+   * @type {number}
+   * @default 3
+   */
+  speed = 3;
+
+  /**
+   * Reference to the game world object.
+   * @type {World}
+   */
+  world;
+
+  /**
+   * Creates a new Statusbar instance of the specified type.
+   * @param {string} images - Status bar type ("health", "coin", "bottle", or "endboss")
+   */
+  constructor(images) {
     super();
-    this.type = type;
-    this.x = x;
-    this.y = y;
-    this.width = 200;
-    this.height = 60;
-    this.IMAGES = this.getImagesForType(type);
-    this.loadAllImages();
+    this.assignImages(images);
+    this.loadImages(this.images);
+    this.width = 150;
+    this.height = 40;
+    this.setPercentage(this.percentageStartValue());
   }
 
   /**
-   * Lädt alle Bilder der StatusBar und speichert sie im Cache.
-   * Setzt imagesLoaded auf true, wenn alle Bilder fertig geladen sind.
-   * @private
+   * Determines the initial percentage value based on status bar type.
+   * Health and endboss bars start full (100%), collection bars start empty (0%).
+   * @returns {number} Initial percentage value (0 or 100)
    */
-  loadAllImages() {
-    let loaded = 0;
-    this.IMAGES.forEach(path => {
-      const img = new Image();
-      img.onload = () => {
-        loaded++;
-        if (loaded === this.IMAGES.length) {
-          this.imagesLoaded = true;
-          this.setPercentage(this.percentage);
-        }
-      };
-      img.src = path;
-      this.imageCache[path] = img;
-    });
+  percentageStartValue() {
+    if (this.images === this.IMAGES || this.images === this.IMAGES_ENDBOSS) {
+      return 100;
+    } else {
+      return 0;
+    }
   }
 
   /**
-   * Liefert die Bildpfade passend zum StatusBar-Typ zurück.
-   * @param {string} type - Typ der StatusBar.
-   * @returns {string[]} Array von Bildpfaden.
+   * Assigns the appropriate image array and screen position based on status bar type.
+   * Sets up type-specific positioning and special behaviors (endboss animation).
+   * @param {string} images - Status bar type identifier
    */
-  getImagesForType(type) {
-    const paths = {
-      health: [
-        "img/7_statusbars/1_statusbar/2_statusbar_health/orange/0.png",
-        "img/7_statusbars/1_statusbar/2_statusbar_health/orange/20.png",
-        "img/7_statusbars/1_statusbar/2_statusbar_health/orange/40.png",
-        "img/7_statusbars/1_statusbar/2_statusbar_health/orange/60.png",
-        "img/7_statusbars/1_statusbar/2_statusbar_health/orange/80.png",
-        "img/7_statusbars/1_statusbar/2_statusbar_health/orange/100.png",
-      ],
-      bottle: [
-        "img/7_statusbars/1_statusbar/3_statusbar_bottle/blue/0.png",
-        "img/7_statusbars/1_statusbar/3_statusbar_bottle/blue/20.png",
-        "img/7_statusbars/1_statusbar/3_statusbar_bottle/blue/40.png",
-        "img/7_statusbars/1_statusbar/3_statusbar_bottle/blue/60.png",
-        "img/7_statusbars/1_statusbar/3_statusbar_bottle/blue/80.png",
-        "img/7_statusbars/1_statusbar/3_statusbar_bottle/blue/100.png",
-      ],
-      coin: [
-        "img/7_statusbars/1_statusbar/1_statusbar_coin/orange/0.png",
-        "img/7_statusbars/1_statusbar/1_statusbar_coin/orange/20.png",
-        "img/7_statusbars/1_statusbar/1_statusbar_coin/orange/40.png",
-        "img/7_statusbars/1_statusbar/1_statusbar_coin/orange/60.png",
-        "img/7_statusbars/1_statusbar/1_statusbar_coin/orange/80.png",
-        "img/7_statusbars/1_statusbar/1_statusbar_coin/orange/100.png",
-      ],
-      endboss: [
-        "img/7_statusbars/2_statusbar_endboss/blue/blue0.png",
-        "img/7_statusbars/2_statusbar_endboss/blue/blue20.png",
-        "img/7_statusbars/2_statusbar_endboss/blue/blue40.png",
-        "img/7_statusbars/2_statusbar_endboss/blue/blue60.png",
-        "img/7_statusbars/2_statusbar_endboss/blue/blue80.png",
-        "img/7_statusbars/2_statusbar_endboss/blue/blue100.png",
-      ]
-    };
-    return paths[type] || [];
+  assignImages(images) {
+    if (images === "health") {
+      this.images = this.IMAGES;
+      this.x = 10;
+      this.y = 80;
+    } else if (images === "coin") {
+      this.images = this.IMAGES_COIN;
+      this.x = 10;
+      this.y = 40;
+    } else if (images === "bottle") {
+      this.images = this.IMAGES_BOTTLE;
+      this.x = 10;
+      this.y = 0;
+    } else {
+      this.images = this.IMAGES_ENDBOSS;
+      this.x = 770;
+      this.y = 46;
+      this.animateEndbossStatusbar();
+    }
   }
 
   /**
-   * Setzt den aktuellen Prozentsatz der StatusBar und aktualisiert das Bild.
-   * Verhindert unnötige Updates, wenn sich der Wert nicht ändert.
-   * @param {number} percentage - Neuer Prozentsatz (0-100).
+   * Updates the status bar display based on the given percentage value.
+   * Selects appropriate image from the current image array and updates display.
+   * @param {number} percentage - New percentage value (0-100)
    */
   setPercentage(percentage) {
-    if (percentage === this.lastPercentage) return;
-
-    this.percentage = Math.max(0, Math.min(100, percentage));
-    this.lastPercentage = this.percentage;
-
-    const index = this.resolveImageIndex();
-    const path = this.IMAGES[index];
-
-    if (this.imageCache[path]) {
-      this.img = this.imageCache[path];
-    }
+    this.percentage = percentage;
+    let path = this.images[this.resolveImageIndex()];
+    this.img = this.imageCache[path];
   }
 
   /**
-   * Setzt den Status basierend auf Treffern und maximaler Trefferzahl.
-   * @param {number} hits - Aktuelle Trefferzahl.
-   * @param {number} maxHits - Maximale Trefferzahl.
-   */
-  setHits(hits, maxHits) {
-    const percentage = Math.max(0, 100 - (hits / maxHits) * 100);
-    this.setPercentage(percentage);
-  }
-
-  /**
-   * Ermittelt den Index des Bildes basierend auf dem aktuellen Prozentsatz.
-   * @returns {number} Index des Bildes im Array.
-   * @private
+   * Converts percentage value to appropriate image array index.
+   * Uses threshold-based mapping: >80%→5, >60%→4, >40%→3, >20%→2, >0%→1, 0%→0.
+   * @returns {number} Image array index (0-5)
    */
   resolveImageIndex() {
-    if (this.percentage === 100) return 5;
-    if (this.percentage >= 80) return 4;
-    if (this.percentage >= 60) return 3;
-    if (this.percentage >= 40) return 2;
-    if (this.percentage >= 20) return 1;
-    return 0;
+    if (this.percentage > 80) {
+      return 5;
+    } else if (this.percentage > 60) {
+      return 4;
+    } else if (this.percentage > 40) {
+      return 3;
+    } else if (this.percentage > 20) {
+      return 2;
+    } else if (this.percentage > 0) {
+      return 1;
+    } else {
+      return 0;
+    }
   }
 
   /**
-   * Zeichnet die StatusBar auf das übergebene Canvas-Kontext-Objekt.
-   * Zeichnet nur, wenn Bilder geladen und bereit sind.
-   * @param {CanvasRenderingContext2D} ctx - Canvas-Zeichenkontext.
+   * Initiates the endboss status bar entrance animation.
+   * Sets up continuous movement checking at 60fps.
    */
-  draw(ctx) {
-    if (!this.imagesLoaded) {
-      return; // Keine Zeichnung, solange Bilder nicht geladen sind
-    }
+  animateEndbossStatusbar() {
+    setStoppableInterval(() => this.moveToPosition(), 1000 / 60);
+  }
 
-    try {
-      if (this.img && this.img.complete) {
-        ctx.drawImage(this.img, this.x, this.y, this.width, this.height);
+  /**
+   * Controls the endboss status bar sliding animation from off-screen to visible position.
+   * Triggers when character encounters endboss, slides from right edge to center-right position.
+   */
+  moveToPosition() {
+    if(this.x >= 550){
+      if (this.world.level.enemies[0].characterMetEndboss) {
+        this.moveLeft();
+        if (this.x >= 550) {
+          this.moveLeft();
+        }
       }
-    } catch {
-      // Fehler ignorieren oder optional Fehlerbehandlung hinzufügen
     }
+   
+  }
+
+  /**
+   * Moves the status bar leftward during entrance animation.
+   */
+  moveLeft() {
+    this.x -= this.speed;
   }
 }
