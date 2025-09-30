@@ -1,18 +1,28 @@
 /**
- * Represents a throwable bottle object that can be thrown, rotate, and splash upon impact.
- * Extends MovableObject with specific bottle-related animations and behavior.
+ * Represents a throwable bottle projectile that can be launched by the character.
+ * Features realistic physics with gravity, horizontal movement, and impact animations.
+ * Changes animation from spinning bottle to splash effect upon hitting enemies.
+ * @extends MovableObject
  */
 class ThrowableObject extends MovableObject {
-  /** @type {string[]} Image paths for the bottle rotation animation */
-  BOTTLE_ROTATION = [
+  /**
+   * Array of image paths for bottle rotation animation during flight.
+   * @type {string[]}
+   * @static
+   */
+  IMAGES_THROWING = [
     "img/6_salsa_bottle/bottle_rotation/1_bottle_rotation.png",
     "img/6_salsa_bottle/bottle_rotation/2_bottle_rotation.png",
     "img/6_salsa_bottle/bottle_rotation/3_bottle_rotation.png",
     "img/6_salsa_bottle/bottle_rotation/4_bottle_rotation.png",
   ];
 
-  /** @type {string[]} Image paths for the bottle splash animation */
-  BOTTLE_SPLASH = [
+  /**
+   * Array of image paths for splash animation when bottle hits target.
+   * @type {string[]}
+   * @static
+   */
+  IMAGES_SPLASH = [
     "img/6_salsa_bottle/bottle_rotation/bottle_splash/1_bottle_splash.png",
     "img/6_salsa_bottle/bottle_rotation/bottle_splash/2_bottle_splash.png",
     "img/6_salsa_bottle/bottle_rotation/bottle_splash/3_bottle_splash.png",
@@ -21,183 +31,113 @@ class ThrowableObject extends MovableObject {
     "img/6_salsa_bottle/bottle_rotation/bottle_splash/6_bottle_splash.png",
   ];
 
-  /** @type {boolean} Whether the bottle is currently splashing */
-  isSplashing = false;
-
-  /** @type {boolean} Whether the bottle has hit an enemy */
-  hasHitEnemy = false;
-
-  /** @type {number} Initial horizontal speed of the thrown bottle */
-  initialSpeedX = 10;
-
-  /** @type {number} Speed (ms) of rotation animation intervals */
-  rotationSpeed = 100;
+  /**
+   * Collision detection offset values for hit box calculations.
+   * Horizontal offsets create smaller hitbox for more precise collision detection.
+   * @type {Object}
+   * @property {number} top - Top offset in pixels
+   * @property {number} left - Left offset in pixels
+   * @property {number} right - Right offset in pixels
+   * @property {number} bottom - Bottom offset in pixels
+   */
+  offset = {
+    top: 0,
+    left: 30,
+    right: 30,
+    bottom: 0,
+  };
 
   /**
-   * Creates a new ThrowableObject instance (bottle) at specified coordinates.
-   * @param {number} x - The initial x-coordinate.
-   * @param {number} y - The initial y-coordinate.
-   * @param {boolean} [otherDirection=false] - Whether the bottle is thrown in the opposite direction.
+   * Flag indicating if the bottle has hit an enemy target.
+   * Triggers splash animation and stops horizontal movement.
+   * @type {boolean}
+   * @default false
    */
-  constructor(x, y, otherDirection = false) {
-    super();
-    this.loadImages(this.BOTTLE_ROTATION);
-    this.loadImages(this.BOTTLE_SPLASH);
+  hitEnemy = false;
+
+  /**
+   * Reference to the game world object.
+   * @type {World}
+   */
+  world;
+
+  /**
+   * Creates a new ThrowableObject at the specified position and launches it.
+   * Direction is determined by character's facing direction at time of throw.
+   * @param {number} x - Initial x-coordinate position
+   * @param {number} y - Initial y-coordinate position
+   */
+  constructor(x, y) {
+    super().loadImage(
+      "img/6_salsa_bottle/bottle_rotation/1_bottle_rotation.png"
+    );
+    this.loadImages(this.IMAGES_THROWING);
+    this.loadImages(this.IMAGES_SPLASH);
     this.x = x;
     this.y = y;
-    this.height = 80;
-    this.width = 60;
-    this.groundLevel = 440;
-    this.gravity = 2.5;
-    this.speedY = -10;
-    this.otherDirection = otherDirection;
+    this.width = 100;
+    this.height = 100;
     this.throw();
+    this.animate();
+    this.applyGravity(); 
+    this.direction = otherDirectionCharacter ? -1 : 1; 
   }
 
   /**
-   * Initiates the throwing action, setting up gravity and movement intervals.
-   * Loads rotation images and sets initial image.
+   * Initiates the throwing motion with upward velocity and horizontal movement.
+   * Sets up continuous horizontal movement until impact occurs.
    */
-  async throw() {
-    await this.loadImages(this.BOTTLE_ROTATION);
-    this.img = this.imageCache[this.BOTTLE_ROTATION[0]];
-    this.isThrown = true;
-
-    this.gravityInterval = setInterval(() => this.applyGravity(), 40);
-
-    const direction = this.otherDirection ? -1 : 1;
-    this.moveInterval = setInterval(() => {
-      this.x += this.initialSpeedX * direction;
-    }, 40);
-
-    this.animateRotation();
-  }
-
-  /**
-   * Animates the bottle rotation by cycling through rotation images.
-   * Runs continuously unless the bottle is splashing.
-   */
-  animateRotation() {
-    this.rotationInterval = setInterval(() => {
-      if (!this.isSplashing) {
-        this.currentImage =
-          (this.currentImage + 1) % this.BOTTLE_ROTATION.length;
-        this.img = this.imageCache[this.BOTTLE_ROTATION[this.currentImage]];
-      }
-    }, this.rotationSpeed);
-  }
-
-  /**
-   * Applies gravity to the bottle, updating vertical position and speed.
-   * Detects ground collision to trigger splash.
-   */
-  applyGravity() {
-    if (this.isSplashing) return;
-
-    this.y += this.speedY;
-    this.speedY += this.gravity;
-
-    if (this.y + this.height >= this.groundLevel) {
-      this.y = this.groundLevel - this.height;
-      this.splash("ground");
-    }
-  }
-
-  /**
-   * Checks collision with another MovableObject.
-   * Uses a specialized collision check for the Endboss.
-   * @param {MovableObject} mo - Another movable object.
-   * @returns {boolean} True if colliding, false otherwise.
-   */
-  isColliding(mo) {
-    if (mo instanceof Endboss) {
-      return this.isCollidingWithEndboss(mo);
-    }
-
-    return super.isColliding(mo);
-  }
-
-  /**
-   * Checks collision with the Endboss using the bottle's center point.
-   * @param {Endboss} endboss - The endboss object.
-   * @returns {boolean} True if the bottle's center is inside the endboss's hitbox.
-   */
-  isCollidingWithEndboss(endboss) {
-    const bottleBox = this.getHitbox();
-    const bossBox = endboss.getHitbox();
-
-    const bottleCenterX = bottleBox.x + bottleBox.width / 2;
-    const bottleCenterY = bottleBox.y + bottleBox.height / 2;
-
-    return (
-      bottleCenterX > bossBox.x &&
-      bottleCenterX < bossBox.x + bossBox.width &&
-      bottleCenterY > bossBox.y &&
-      bottleCenterY < bossBox.y + bossBox.height
-    );
-  }
-
-  /**
- * Triggert die Splash-Animation und den Soundeffekt der Flasche.
- * Wird aufgerufen bei Kollision mit Boden, Gegner oder Endboss.
- * 
- * - Setzt `isSplashing` auf true, um weitere Aktionen zu verhindern.
- * - Stoppt alle aktiven Bewegungsintervalle.
- * - Spielt den Splash-Sound über die zentrale `playSound()`-Funktion.
- * - Startet die Splash-Animation.
- * - Setzt `hasHitEnemy` auf true, wenn ein Gegner oder Endboss getroffen wurde.
- * 
- * @param {string} [cause="unknown"] - Der Auslöser für den Splash (z. B. "ground", "enemy", "endboss").
- */
-splash(cause = "unknown") {
-  if (this.isSplashing) return;
-
-  this.isSplashing = true;
-  this.stopIntervals();
-  playSound("bottle-splash.mp4");
-  this.playSplashAnimation();
-
-  if (cause === "endboss" || cause === "enemy") {
-    this.hasHitEnemy = true;
-  }
-}
-
-  /**
-   * Plays the splash animation by cycling through splash images.
-   * When finished, marks the object to be removed.
-   */
-  playSplashAnimation() {
-    this.currentImage = 0;
-    const splashInterval = setInterval(() => {
-      if (this.currentImage < this.BOTTLE_SPLASH.length) {
-        this.img = this.imageCache[this.BOTTLE_SPLASH[this.currentImage]];
-        this.currentImage++;
+  throw() {
+    this.speedY = 25;
+    this.hitbox = this.getHitBox();
+   
+    setStoppableInterval(() => {
+      if (this.hitEnemy == false ) {
+        this.x += 7 * this.direction;
+        this.hitbox = this.getHitBox();
       } else {
-        clearInterval(splashInterval);
-        this.shouldBeRemoved = true;
+        this.speedY = 0;
+      }
+    }, 1000 / 60);
+  }
+
+  /**
+   * Manages bottle animation states based on impact status.
+   * Shows spinning animation during flight, splash animation after impact.
+   * Uses fractional counter to control splash animation duration.
+   */
+  animate() {
+    let i = 0;
+    setStoppableInterval(() => {
+      if (this.hitEnemy == false && i == 0) {
+        this.playAnimation(this.IMAGES_THROWING);
+      } else if (this.hitEnemy == true && i < 1) {
+        this.playAnimation(this.IMAGES_SPLASH);
+        i += 0.17;
       }
     }, 80);
   }
 
   /**
-   * Stops all active intervals related to gravity, movement, and rotation.
+   * Overrides parent method to ensure bottle always behaves as airborne.
+   * This keeps the bottle subject to gravity throughout its flight.
+   * @returns {boolean} Always returns true to maintain gravity effect
    */
-  stopIntervals() {
-    clearInterval(this.gravityInterval);
-    clearInterval(this.moveInterval);
-    clearInterval(this.rotationInterval);
+  isAboveGround() {
+    return true;
   }
 
   /**
-   * Returns a reduced hitbox rectangle for more precise collision detection.
-   * @returns {{x: number, y: number, width: number, height: number}} The hitbox dimensions.
+   * Applies gravity physics to the thrown bottle.
+   * Uses faster interval (40fps) for smoother physics simulation.
+   * Continuously reduces vertical speed and lowers position until impact.
    */
-  getHitbox() {
-    return {
-      x: this.x + 10,
-      y: this.y + 10,
-      width: this.width - 20,
-      height: this.height - 20,
-    };
+  applyGravity() {
+    setStoppableInterval(() => {
+      if (this.isAboveGround() || this.speedY > 0) {
+        this.y -= this.speedY;
+        this.speedY -= this.acceleration;
+      }
+    }, 1000 / 25);
   }
 }
