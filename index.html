@@ -23,6 +23,7 @@
     <script src="./models/statusbar.class.js" defer></script>
     <script src="./models/character.class.js" defer></script>
     <script src="./models/thoughtBubble.class.js" defer></script>
+
     <script src="./models/coin.class.js" defer></script>
     <script src="./models/bottle.class.js" defer></script>
     <script src="./js/levels/level1.js" defer></script>
@@ -35,9 +36,8 @@
     <script src="./models/endboss.class.js" defer></script>
   </head>
   <body>
-
     <div id="orientationMessage" style="display: none">
-      <p>Bitte drehen Sie Ihr Endgerät.</p>
+      <p>Please rotate your device to play the game.</p>
       <a
         href="./impressum.html"
         class="position-absolute"
@@ -54,7 +54,6 @@
         Impressum
       </a>
     </div>
-
     <div id="canvas-container" class="canvas-container" style="display: flex">
       <div class="flex flex-column align-center">
         <img class="title" src="./img/title.PNG" alt="El Pollo Loco" />
@@ -104,9 +103,7 @@
           >
             <img src="img/9_intro_outro_screens/win/win-1.png" alt="" />
             <div class="endscreen-btns flex position-absolute">
-              <button class="menu-btn" onclick="showStartScreen()">
-                Neuer Versuch
-              </button>
+              <button class="menu-btn" onclick="showStartScreen()">Neuer Versuch</button>
             </div>
           </div>
           <canvas id="canvas" width="720" height="480"></canvas>
@@ -132,7 +129,6 @@
             </div>
           </div>
         </div>
-
         <a
           href="impressum.html"
           id="impressum"
@@ -158,11 +154,9 @@
             class="spinner-img"
           />
         </div>
-
       </div>
     </div>
 
     <img class="controls" src="./img/controls.png" alt="controls" />
-    
   </body>
 </html>
